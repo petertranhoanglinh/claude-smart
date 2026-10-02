@@ -55,6 +55,7 @@ test('existing CLAUDE.md, settings.json and user docs are preserved', () => {
   const s = JSON.parse(read(dir, '.claude/settings.json'));
   assert.ok(s.permissions.allow.includes('Bash(make*)'));
   assert.ok(s.permissions.allow.includes('Bash(git status*)'));
+  assert.ok(s.permissions.deny.includes('mcp__serena__replace_symbol_body'), 'serena edits denied');
   assert.equal(s.hooks.Stop.length, 2);
   assert.ok(s.hooks.PreToolUse.length >= 2);
   assert.ok(existsSync(path.join(dir, '.claude/settings.json.bak')));
@@ -124,6 +125,9 @@ test('installMcp merges servers without replacing existing ones', () => {
   assert.equal(cfg.mcpServers.github.type, 'http');
   assert.ok(warnings.some((w) => w.includes('GITHUB_PERSONAL_ACCESS_TOKEN')));
   assert.throws(() => installMcp(dir, ['nope']), /Unknown MCP/);
+  const s = installMcp(dir, ['serena']);
+  assert.ok(s.warnings.some((w) => /serena next: Index once/.test(w)));
+  assert.ok(JSON.parse(read(dir, '.mcp.json')).mcpServers.serena.args.includes('claude-code'));
 });
 
 test('detectCommands for a monorepo without root manifest', () => {

@@ -6,7 +6,8 @@ Tài liệu này hướng dẫn từng bước cách đưa claude-smart vào m�
 
 ## Mục lục
 
-1. [Chuẩn bị](#1-chuẩn-bị)
+0. [Checklist trước khi làm việc](#-checklist-trước-khi-làm-việc)
+1. [Chuẩn bị: cài công cụ trên máy](#1-chuẩn-bị-cài-công-cụ-trên-máy)
 2. [Tải claude-smart về máy](#2-tải-claude-smart-về-máy)
 3. [Cài vào dự án mới](#3-cài-vào-dự-án-mới)
 4. [Cài vào dự án đã có code](#4-cài-vào-dự-án-đã-có-code)
@@ -22,15 +23,54 @@ Tài liệu này hướng dẫn từng bước cách đưa claude-smart vào m�
 
 ---
 
-## 1. Chuẩn bị
+## ✅ Checklist trước khi làm việc
+
+Làm theo thứ tự. Phần A làm một lần trên mỗi máy, phần B làm một lần cho mỗi dự án. `CS` là đường dẫn tới thư mục claude-smart, ví dụ `E:\tools\claude-smart`.
+
+**A. Trên máy (1 lần)**
+- [ ] Tải claude-smart về máy ([mục 2](#2-tải-claude-smart-về-máy)).
+- [ ] Cài công cụ bằng script ([mục 1](#1-chuẩn-bị-cài-công-cụ-trên-máy)):
+  - Windows: `powershell -ExecutionPolicy Bypass -File CS\tools\setup-tools.ps1`
+  - macOS/Linux: `bash CS/tools/setup-tools.sh`
+- [ ] **Đóng hẳn và mở lại terminal và VS Code**, để PATH nhận các công cụ vừa cài.
+- [ ] Kiểm tra bằng `node CS/install.mjs --doctor`: các mục bắt buộc phải là ✔. Dấu `!` nghĩa là đã cài nhưng chưa mở lại terminal.
+
+**B. Trong mỗi dự án (1 lần)**
+- [ ] Cài claude-smart kèm MCP: `node CS/install.mjs . --lang=vi --mcp=playwright,context7,serena` ([mục 3](#3-cài-vào-dự-án-mới) / [mục 4](#4-cài-vào-dự-án-đã-có-code)).
+- [ ] Chuẩn bị Serena ([mục 8.1](#81-serena-tìm-code-theo-symbol)): khai báo các ngôn ngữ trong `.serena/project.yml`, rồi chạy `serena project index`.
+- [ ] Có frontend thì cài trình duyệt cho Playwright: `npx playwright install chromium` (chạy trong thư mục frontend).
+- [ ] Mở `claude`, chấp nhận **trust**, gõ `/mcp` để duyệt các server, rồi chạy `/bootstrap` ([mục 5](#5-lần-chạy-đầu-tiên-trust-và-bootstrap)).
+- [ ] Có frontend mà chưa có test e2e thì chạy `/e2e-setup`.
+- [ ] Commit các file: `.claude`, `CLAUDE.md`, `docs/ai`, `.mcp.json`, `.serena/project.yml`.
+
+---
+
+## 1. Chuẩn bị: cài công cụ trên máy
+
+**Cách nhanh: script tự cài những gì còn thiếu** (chạy lại bao nhiêu lần cũng được):
+
+```powershell
+# Windows (PowerShell). Thêm -DryRun để chỉ xem trước, -All để cài thêm GitHub CLI và Docker Desktop
+powershell -ExecutionPolicy Bypass -File E:\tools\claude-smart\tools\setup-tools.ps1
+```
+
+```bash
+# macOS / Linux / WSL
+bash ~/tools/claude-smart/tools/setup-tools.sh
+```
+
+Script dùng `winget` (Windows) cùng `npm`, `curl`, `go install`, và cảnh báo nếu Git quá cũ.
+
+**Hoặc cài tay từng công cụ:**
 
 | Công cụ | Bắt buộc? | Kiểm tra | Cài đặt |
 |---|---|---|---|
 | Node.js ≥ 18 | Có | `node --version` | https://nodejs.org |
-| Git | Có | `git --version` | https://git-scm.com (nên dùng bản mới) |
+| Git | Có | `git --version` | https://git-scm.com (nên dùng bản mới; bản cũ hay treo khi đăng nhập GitHub) |
 | Claude Code | Có | `claude --version` | `npm install -g @anthropic-ai/claude-code` |
 | ast-grep | Nên có | `ast-grep --version` | `npm install -g @ast-grep/cli` |
-| uv / uvx | Tùy chọn | `uvx --version` | Chỉ cần cho MCP serena, postgres. Windows: `winget install --id=astral-sh.uv -e` · macOS/Linux: `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| uv / uvx | Nên có | `uvx --version` | Cần cho MCP **serena** (tìm code theo symbol, tiết kiệm token) và postgres. Windows: `winget install --id=astral-sh.uv -e` · macOS/Linux: `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| gopls | Nên có nếu dự án dùng Go | `gopls version` | `go install golang.org/x/tools/gopls@latest`. Serena cần nó để hiểu code Go; với các ngôn ngữ khác Serena tự tải |
 | Docker | Tùy chọn | `docker --version` | Chỉ cần nếu dùng `sandbox/` |
 
 > Cài công cụ mới xong (Node, ast-grep, uv…) mà vẫn báo `is not recognized` / `command not found`: **đóng hết terminal và mở lại** (kể cả VS Code) để PATH được cập nhật.
@@ -49,7 +89,14 @@ git clone https://github.com/petertranhoanglinh/claude-smart.git ~/tools/claude-
 git clone https://github.com/petertranhoanglinh/claude-smart.git E:\tools\claude-smart
 ```
 
-Kiểm tra máy đã có đủ công cụ chưa:
+Cài các công cụ còn thiếu (ast-grep, uv, gopls…) bằng script đi kèm:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File E:\tools\claude-smart\tools\setup-tools.ps1   # Windows
+bash ~/tools/claude-smart/tools/setup-tools.sh                                          # macOS / Linux
+```
+
+Đóng và mở lại terminal và VS Code, rồi kiểm tra máy đã có đủ công cụ chưa:
 
 ```bash
 node ~/tools/claude-smart/install.mjs --doctor
@@ -230,7 +277,7 @@ node .claude/hooks/configure.mjs strict=false          # tắt toàn bộ chặn
 
 ```bash
 node CS/install.mjs --list-mcp                                  # xem danh sách
-node CS/install.mjs . --mcp-only --mcp=playwright,context7      # thêm vào dự án đã cài
+node CS/install.mjs . --mcp-only --mcp=playwright,context7,serena   # thêm vào dự án đã cài
 ```
 
 Sau đó mở lại `claude`, duyệt các server khi được hỏi, rồi gõ `/mcp` để xem trạng thái.
@@ -246,6 +293,50 @@ $env:DATABASE_URI = "postgresql://readonly:pass@localhost:5432/myapp_dev"
 ```
 
 > Chỉ dùng database local hoặc dev, với user chỉ có quyền đọc.
+
+### 8.1 Serena: tìm code theo symbol
+
+Serena dùng language server (giống tính năng "Go to Definition" trong IDE) để Claude tìm **đúng hàm hoặc kiểu** và mọi nơi gọi nó, thay vì đọc cả file. Đây là công cụ tiết kiệm token nhiều nhất trên repo lớn.
+
+**Cần có:** `uvx` ([mục 1](#1-chuẩn-bị-cài-công-cụ-trên-máy)). Dự án Go cần thêm `gopls`; TypeScript, Python… thì Serena tự tải language server ở lần đầu.
+
+**Bước 1: thêm vào dự án**
+
+```powershell
+node CS/install.mjs . --mcp-only --mcp=serena
+```
+
+claude-smart cấu hình Serena như sau:
+- `--context claude-code`: tắt các tool trùng với tool có sẵn của Claude Code.
+- `--project-from-cwd`: tự nhận dự án theo thư mục đang mở.
+- Không tự mở trình duyệt mỗi lần khởi động.
+- Bỏ các tool onboarding và bộ nhớ riêng (bộ nhớ dự án đã nằm ở `docs/ai/`).
+- **Các tool sửa code của Serena bị chặn** trong `settings.json`, để mọi lần sửa đều đi qua hook claude-smart (chặn `.env`, lint/format). Serena chỉ dùng để **tìm**.
+
+**Bước 2: khai báo ngôn ngữ.** Lần chạy đầu, Serena tạo `.serena/project.yml` và chỉ nhận **một** ngôn ngữ. Dự án có cả backend lẫn frontend thì mở file này và liệt kê đủ:
+
+```yaml
+language_servers:
+- go
+- typescript
+```
+
+(Các tên khác: `python`, `java`, `kotlin`, `csharp`, `rust`, `php`, `ruby`, `vue`…; danh sách đầy đủ nằm ngay trong phần comment của file.)
+
+**Bước 3: lập chỉ mục trước** (nếu không, lần tìm đầu tiên có thể mất vài phút):
+
+```powershell
+cd <thư-mục-dự-án>
+uvx --from git+https://github.com/oraios/serena serena project index
+```
+
+Kết quả mẫu: `Indexed files per language: typescript=64, go=113`. Sau bước này, mỗi lần tìm chỉ mất khoảng 2 giây.
+
+**Bước 4:** đóng và mở lại VS Code/`claude`, gõ `/mcp` và duyệt `serena`. Commit `.serena/project.yml`; thư mục cache Serena tự loại khỏi git.
+
+**Kiểm tra:** hỏi Claude *"Dùng serena tìm mọi nơi gọi hàm apiFetch"*. Claude sẽ gọi `find_referencing_symbols` và trả về danh sách mà không cần mở file nào.
+
+> Serena báo lỗi không khởi động được? Thường do VS Code được mở **trước** khi cài `uv`, nên không thấy lệnh `uvx`. Đóng hẳn VS Code rồi mở lại. `node CS/install.mjs --doctor` sẽ hiện `!` ở dòng `uvx` nếu đúng là trường hợp này.
 
 ## 9. Monorepo và dự án nhiều ngôn ngữ
 

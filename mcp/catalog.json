@@ -2,17 +2,51 @@
   "playwright": {
     "about": "Headless browser: open the app, click through it, take screenshots to check UI/layout.",
     "needs": "Node",
-    "config": { "command": "npx", "args": ["-y", "@playwright/mcp@latest"] }
+    "config": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    }
   },
   "context7": {
     "about": "Up-to-date library/framework documentation on demand (stops hallucinated APIs).",
     "needs": "Node",
-    "config": { "command": "npx", "args": ["-y", "@upstash/context7-mcp@latest"] }
+    "config": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ]
+    }
   },
   "serena": {
-    "about": "Symbol-level code navigation via language servers (find symbol, references, overview) — semantic code search without a vector DB.",
-    "needs": "uv (uvx)",
-    "config": { "command": "uvx", "args": ["--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server", "--project", "."] }
+    "about": "Symbol-level code navigation via language servers (find symbol, references, implementations, file overview) — read only; its editing tools are denied in settings.json so edits keep going through claude-smart hooks.",
+    "needs": "uv (uvx); language servers: Go needs gopls, others are downloaded on first use",
+    "config": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "claude-code",
+        "--project-from-cwd",
+        "--open-web-dashboard",
+        "False",
+        "--add-mode",
+        "no-onboarding",
+        "--add-mode",
+        "no-memories"
+      ]
+    },
+    "next": [
+      "Index once, in the project dir (otherwise the first search takes minutes): uvx --from git+https://github.com/oraios/serena serena project index",
+      "Several languages (e.g. Go backend + TS frontend)? list them under language_servers in .serena/project.yml, then index again",
+      "Commit .serena/project.yml (Serena ignores .serena/cache itself). Restart Claude and approve the server in /mcp"
+    ]
   },
   "github": {
     "about": "Issues, PRs, reviews, releases from inside Claude Code.",
@@ -20,21 +54,38 @@
     "config": {
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/",
-      "headers": { "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}" }
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
     }
   },
   "postgres": {
     "about": "Inspect schema and query a LOCAL/DEV PostgreSQL in restricted (read-only) mode.",
     "needs": "uv (uvx), env DATABASE_URI",
-    "config": { "command": "uvx", "args": ["postgres-mcp", "--access-mode=restricted"], "env": { "DATABASE_URI": "${DATABASE_URI}" } }
+    "config": {
+      "command": "uvx",
+      "args": [
+        "postgres-mcp",
+        "--access-mode=restricted"
+      ],
+      "env": {
+        "DATABASE_URI": "${DATABASE_URI}"
+      }
+    }
   },
   "mongodb": {
     "about": "Inspect collections and query a LOCAL/DEV MongoDB, read-only.",
     "needs": "Node, env MDB_MCP_CONNECTION_STRING",
     "config": {
       "command": "npx",
-      "args": ["-y", "mongodb-mcp-server", "--readOnly"],
-      "env": { "MDB_MCP_CONNECTION_STRING": "${MDB_MCP_CONNECTION_STRING}" }
+      "args": [
+        "-y",
+        "mongodb-mcp-server",
+        "--readOnly"
+      ],
+      "env": {
+        "MDB_MCP_CONNECTION_STRING": "${MDB_MCP_CONNECTION_STRING}"
+      }
     }
   },
   "claude-context": {
@@ -42,8 +93,15 @@
     "needs": "Node, env OPENAI_API_KEY, MILVUS_ADDRESS, MILVUS_TOKEN",
     "config": {
       "command": "npx",
-      "args": ["-y", "@zilliz/claude-context-mcp@latest"],
-      "env": { "OPENAI_API_KEY": "${OPENAI_API_KEY}", "MILVUS_ADDRESS": "${MILVUS_ADDRESS}", "MILVUS_TOKEN": "${MILVUS_TOKEN}" }
+      "args": [
+        "-y",
+        "@zilliz/claude-context-mcp@latest"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "MILVUS_ADDRESS": "${MILVUS_ADDRESS}",
+        "MILVUS_TOKEN": "${MILVUS_TOKEN}"
+      }
     }
   }
 }

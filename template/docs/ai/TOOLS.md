@@ -11,7 +11,7 @@ Never pass `-U`/`--update-all` (rewrites files) unless the plan step says so and
 Keep using Grep for plain text, config keys, log messages.
 
 ## Semantic navigation (MCP, if configured in .mcp.json)
-- **serena** — find a symbol, its references, a file's symbol overview. Prefer it over reading whole files.
+- **serena** — `find_symbol`, `find_referencing_symbols`, `find_implementations`, `get_symbols_overview`: locate code by symbol instead of reading whole files (biggest token saver on large repos). Read-only here: its editing/memory tools are denied so every edit goes through Edit/Write and the claude-smart hooks; project memory stays in docs/ai/.
 - **claude-context** — natural-language search over the indexed codebase ("where is price-change handling?"). Use it to pick 3–5 candidate files, then verify by reading.
 - **context7** — current docs for a library/framework version. Use before using an API you are not certain about.
 

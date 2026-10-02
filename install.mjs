@@ -319,6 +319,7 @@ export function installMcp(target, names, { dryRun = false } = {}) {
   }
   if (added.length) plan.write(file, `${JSON.stringify(current, null, 2)}\n`, existsSync(file) ? 'merge' : 'create');
   const warnings = added.filter((n) => /env /.test(catalog[n].needs)).map((n) => `${n} needs: ${catalog[n].needs}`);
+  for (const n of added) for (const step of catalog[n].next || []) warnings.push(`${n} next: ${step}`);
   return { actions: plan.actions, warnings };
 }
 
@@ -330,15 +331,25 @@ const TOOLS = [
   ['ast-grep', ['--version'], 'structural search — npm i -g @ast-grep/cli'],
   ['npx', ['--version'], 'MCP: playwright, context7, mongodb, claude-context; repomix'],
   ['uvx', ['--version'], `optional, MCP serena/postgres — ${process.platform === 'win32' ? 'winget install --id=astral-sh.uv -e' : 'curl -LsSf https://astral.sh/uv/install.sh | sh'} (then reopen the terminal)`],
+  ['gopls', ['version'], 'optional, Go projects: language server for Serena — go install golang.org/x/tools/gopls@latest'],
   ['gh', ['--version'], 'optional, GitHub CLI (alternative to GitHub MCP)'],
   ['docker', ['--version'], 'sandbox/ — isolated autonomous runs'],
+];
+
+// Where installers put binaries; if a tool is there but not on PATH, the terminal/IDE just needs a restart.
+const EXTRA_BIN_DIRS = [
+  path.join(homedir(), '.local', 'bin'),
+  path.join(homedir(), 'go', 'bin'),
+  path.join(homedir(), '.cargo', 'bin'),
+  ...(process.env.LOCALAPPDATA ? [path.join(process.env.LOCALAPPDATA, 'Microsoft', 'WinGet', 'Links')] : []),
 ];
 
 export function doctor() {
   return TOOLS.map(([cmd, args, why]) => {
     const r = spawnSync(cmd, args, { encoding: 'utf8', shell: process.platform === 'win32' });
     const ok = !r.error && r.status === 0;
-    return { cmd, ok, version: ok ? (r.stdout || r.stderr).trim().split(/\r?\n/)[0] : '', why };
+    const offPath = ok ? null : EXTRA_BIN_DIRS.find((d) => ['', '.exe', '.cmd'].some((ext) => existsSync(path.join(d, cmd + ext))));
+    return { cmd, ok, version: ok ? (r.stdout || r.stderr).trim().split(/\r?\n/)[0] : '', why, offPath };
   });
 }
 
@@ -390,7 +401,15 @@ function main(argv) {
   const opts = { dryRun: flags.has('--dry-run'), force: flags.has('--force'), lang: langArg ? langArg.slice(7) : undefined };
 
   if (flags.has('--doctor')) {
-    for (const t of doctor()) console.log(`  ${t.ok ? '✔' : '✘'} ${t.cmd.padEnd(9)} ${t.ok ? t.version : `missing — ${t.why}`}`);
+    for (const t of doctor()) {
+      const status = t.ok ? '✔' : t.offPath ? '!' : '✘';
+      const detail = t.ok
+        ? t.version
+        : t.offPath
+          ? `installed in ${t.offPath} but not on this terminal's PATH — close and reopen the terminal and VS Code`
+          : `missing — ${t.why}`;
+      console.log(`  ${status} ${t.cmd.padEnd(9)} ${detail}`);
+    }
     return 0;
   }
   if (flags.has('--list-mcp')) {

@@ -484,8 +484,16 @@ File này **không commit** (đã nằm trong `.gitignore`), chỉ áp dụng ch
 
 ```powershell
 node E:\start-up\claude-smart\install.mjs --list-mcp                         # xem có gì
-node E:\start-up\claude-smart\install.mjs . --mcp-only --mcp=playwright,context7
+node E:\start-up\claude-smart\install.mjs . --mcp-only --mcp=playwright,context7,serena
 ```
+
+| Server | Dùng để | Bạn nhờ Claude thế nào |
+|---|---|---|
+| `serena` | Tìm hàm/kiểu và nơi gọi theo symbol, không phải đọc cả file (tiết kiệm token nhất) | *"Dùng serena tìm mọi nơi gọi CreatePending"* |
+| `context7` | Tài liệu đúng phiên bản thư viện (Next.js 16, aws-sdk-go-v2…) | *"Tra context7 cách tạo presigned PUT URL với aws-sdk-go-v2"* |
+| `playwright` | Mở trình duyệt xem giao diện, chụp màn hình | *"Mở /dashboard bằng playwright, chụp màn hình"* |
+
+Serena cần chuẩn bị một lần (khai báo ngôn ngữ và lập chỉ mục): xem [INSTALL.md mục 8.1](INSTALL.md#81-serena-tìm-code-theo-symbol).
 
 Trong Claude, gõ `/mcp` để xem server nào đang chạy. Server cần biến môi trường (`DATABASE_URI`, `GITHUB_PERSONAL_ACCESS_TOKEN`…) thì đặt biến trong terminal trước khi mở `claude`/VS Code.
 

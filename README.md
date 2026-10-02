@@ -22,13 +22,18 @@ Cài một lần bằng 1 lệnh, áp dụng cho dự án mới hoặc dự án 
 - **Node.js ≥ 18** (hooks và installer viết bằng Node để chạy được trên Windows / macOS / Linux)
 - **Git** (nên dùng bản mới; kiểm tra bằng `git --version`)
 - **Claude Code** (`npm i -g @anthropic-ai/claude-code`)
-- Tùy chọn: `ast-grep`, `uv`, `docker`, `gh` — xem [Bộ công cụ mở rộng](#5-bộ-công-cụ-mở-rộng-x100)
+- Nên có: `ast-grep`, `uv` (cho Serena), `gopls` (dự án Go); tùy chọn: `docker`, `gh`. Xem [Bộ công cụ mở rộng](#5-bộ-công-cụ-mở-rộng-x100)
 
-Kiểm tra nhanh máy bạn có gì:
+Cài một lần tất cả những gì còn thiếu, rồi kiểm tra:
 
 ```bash
+powershell -ExecutionPolicy Bypass -File tools\setup-tools.ps1   # Windows
+bash tools/setup-tools.sh                                        # macOS / Linux
+# đóng và mở lại terminal + VS Code, rồi:
 node install.mjs --doctor
 ```
+
+Danh sách đầy đủ các việc cần chuẩn bị trước khi làm việc: [INSTALL.md → Checklist](INSTALL.md#-checklist-trước-khi-làm-việc).
 
 ## 2. Cài đặt nhanh
 
