@@ -8,6 +8,7 @@ set -u
 ALL=0; DRY=0
 for a in "$@"; do case "$a" in --all) ALL=1 ;; --dry-run) DRY=1 ;; esac; done
 
+export PATH="$HOME/.local/bin:$HOME/go/bin:$HOME/.cargo/bin:$PATH" # where uv / go install put binaries
 has() { command -v "$1" >/dev/null 2>&1; }
 step() { # name, check-cmd, install-cmd
   if has "$2"; then printf '  [ok]      %s\n' "$1"; return; fi
