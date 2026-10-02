@@ -1,5 +1,6 @@
 ---
 name: review-diff
+disable-model-invocation: true
 description: Review current changes (uncommitted diff, or a branch/commit range) with the reviewer subagent against the active plan and conventions. Use before merging or after finishing a plan.
 argument-hint: "[git range, e.g. main...HEAD]"
 ---

@@ -1,5 +1,6 @@
 ---
 name: implement
+disable-model-invocation: true
 description: Execute exactly ONE unchecked step of the active plan in docs/ai/plans/ — code, test, tick the checkbox, update PROGRESS, commit. Use repeatedly to work through a plan.
 argument-hint: "[plan file or step number, optional]"
 ---

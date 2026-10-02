@@ -1,11 +1,12 @@
 ---
 name: checkpoint
+disable-model-invocation: true
 description: Save working memory to disk before clearing context — update PROGRESS.md and the active plan, record decisions, commit. Use when context is long, before /clear, or at the end of a session.
 ---
 
 Write down everything the next session needs, because the chat is about to be cleared.
 
-1. Update `docs/ai/PROGRESS.md` (keep it under ~40 lines; overwrite stale content):
+1. Update `docs/ai/PROGRESS.md` (keep it under 25 lines; overwrite stale content — history lives in git, so drop old "Recently done" entries):
    - Now: active plan path, current step, what is half-done and exactly where.
    - Recently done: last few completed items with commit hashes.
    - Next up: the concrete next action.

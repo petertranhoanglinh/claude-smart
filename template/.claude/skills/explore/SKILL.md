@@ -1,5 +1,6 @@
 ---
 name: explore
+disable-model-invocation: true
 description: Read-only investigation of how something works in this codebase (a feature, flow, bug area) using explorer subagents, without loading files into the main context. Use before planning or when asked "where/how does X work".
 argument-hint: "<topic or question>"
 ---

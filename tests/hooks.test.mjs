@@ -153,7 +153,7 @@ test('session-start: approved spec without plan and BMAD are announced', () => {
   const ctx = JSON.parse(runHook('session-start.mjs', dir, {}).stdout).hookSpecificOutput.additionalContext;
   assert.match(ctx, /Spec approved but not planned yet: docs\/ai\/specs\/media-library\.md/);
   assert.doesNotMatch(ctx, /done\.md|draft\.md/);
-  assert.match(ctx, /BMAD is installed: use it for planning only/);
+  assert.match(ctx, /BMAD is installed: planning only/);
 });
 
 test('stop-verify: code change with failing tests blocks, capped by maxStopRetries', () => {

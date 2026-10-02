@@ -576,6 +576,31 @@ node E:\start-up\claude-smart\install.mjs . --dry-run   # có bản claude-smart
 
 Trong Claude: `/hooks` (hook đã bật), `/agents`, `/mcp`.
 
+### 14.8 Tiết kiệm token
+
+Mỗi lượt chat gửi lại **toàn bộ** cuộc trò chuyện, nên độ dài phiên là thứ tốn nhất, không phải cấu hình.
+
+| Thói quen | Tác dụng |
+|---|---|
+| `/clear` sau mỗi việc; phiên dài thì `/checkpoint` → `/clear` | Lớn nhất: phiên luôn ngắn, bộ nhớ vẫn nằm trong file |
+| `/context` khi thấy chậm; quá nửa thì dọn | Biết lúc nào cần dọn |
+| `/compact giữ quyết định X và bước đang làm` | Nén lịch sử khi chưa muốn `/clear` |
+| `/model`: Sonnet cho `/implement` và sửa nhỏ; Opus cho `/plan-task`, `/spec`, review | Rẻ hơn nhiều với việc đã có plan rõ |
+| Nói rõ file/hàm cần sửa; không dán log dài (để `test-runner` đọc) | Claude không phải đi dò |
+| Mỗi phiên một việc | Không kéo lịch sử việc cũ theo |
+
+claude-smart đã gọn sẵn:
+- Các lệnh `/plan-task`, `/implement`, `/checkpoint`, `/explore`, `/review-diff`… **không nạp mô tả** vào phiên (bạn vẫn gõ được như thường).
+- `WORKFLOW.md` và `TOOLS.md` chỉ là bản tóm tắt; chi tiết nằm ở `docs/ai/tools-reference.md`, chỉ đọc khi cần.
+- PROGRESS chỉ nạp tối đa 30 dòng; `/checkpoint` giữ nó dưới 25 dòng.
+
+Muốn gọn hơn nữa:
+- **Chưa dùng BMAD trong vài tuần tới?** Gỡ đi để bớt khoảng 1.800 token mỗi phiên. Lúc cần thì cài lại bằng lệnh ở [mục 13.1](#131-cài-bmad-vào-dự-án-đã-có-claude-smart).
+  ```powershell
+  npx skills remove bmad bmod-core-tools bmod-method bmad-customize bmad-advanced-elicitation bmad-agent-analyst bmad-agent-architect bmad-agent-pm bmad-agent-ux-designer bmad-architecture bmad-brainstorming bmad-deep-recon bmad-forge-idea bmad-party-mode bmad-prd bmad-prfaq bmad-product-brief bmad-project-context bmad-spec bmad-ticket bmad-ux bmad-correct-course bmad-walkthrough -a claude-code -y
+  ```
+- Tắt MCP không dùng trong phiên (ví dụ `playwright` khi chỉ làm backend) bằng `/mcp`.
+
 ## 15. Câu hỏi thường gặp
 
 **Chat bình thường có bị hạn chế gì không?**

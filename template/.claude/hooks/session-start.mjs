@@ -55,23 +55,23 @@ safe(() => {
   const parts = ['# claude-smart: session context (auto-loaded)'];
 
   const progress = read(path.join(dir, 'docs', 'ai', 'PROGRESS.md'));
-  if (progress) parts.push(`## docs/ai/PROGRESS.md\n${head(progress, 60)}`);
+  if (progress) parts.push(`## docs/ai/PROGRESS.md\n${head(progress, 30)}`);
 
   const plan = activePlan(dir);
   if (plan) {
     parts.push(
-      `## Active plan: ${plan.title} (${plan.file})\nRemaining steps:\n${plan.open.slice(0, 15).join('\n')}` +
-        (plan.open.length > 15 ? `\n…and ${plan.open.length - 15} more` : ''),
+      `## Active plan: ${plan.title} (${plan.file})\nRemaining steps:\n${plan.open.slice(0, 8).join('\n')}` +
+        (plan.open.length > 8 ? `\n…and ${plan.open.length - 8} more` : ''),
     );
   }
 
   const branch = git(['rev-parse', '--abbrev-ref', 'HEAD'], dir);
   if (branch !== null) {
     const status = git(['status', '--short'], dir) || '';
-    const log = git(['log', '--oneline', '-5'], dir) || '';
+    const log = git(['log', '--oneline', '-3'], dir) || '';
     parts.push(
       `## Git\nBranch: ${branch.trim()}\n` +
-        (status.trim() ? `Uncommitted:\n${head(status, 20)}\n` : 'Working tree clean.\n') +
+        (status.trim() ? `Uncommitted:\n${head(status, 10)}\n` : 'Working tree clean.\n') +
         (log.trim() ? `Recent commits:\n${log.trim()}` : ''),
     );
   }
@@ -84,7 +84,7 @@ safe(() => {
   }
   if (existsSync(path.join(dir, '_bmad')) || existsSync(path.join(dir, '.bmad-core'))) {
     notes.push(
-      'BMAD is installed: use it for planning only (brief, PRD/spec, architecture, tickets in _bmad-output/). ' +
+      'BMAD is installed: planning only (see docs/ai/tools-reference.md). ' +
         'Implement a ticket with `/plan-task <ticket>` → `/implement`, not with bmad-build / bmad-build-auto.',
     );
   }
@@ -94,7 +94,6 @@ safe(() => {
       `LANGUAGE: write everything the user reads in ${cfg.language} — chat replies, questions, plans (docs/ai/plans, headings included), PROGRESS.md, ADRs, review reports, docs/ai/*.md. Keep code, identifiers, file paths, commands, "- [ ]" checkboxes and commit messages as they are.`,
     );
   }
-  notes.push('Follow docs/ai/WORKFLOW.md: Explore → Plan → Clear → Implement one step at a time.');
   parts.push(`## Notes\n- ${notes.join('\n- ')}`);
 
   process.stdout.write(

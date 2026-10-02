@@ -1,5 +1,6 @@
 ---
 name: plan-task
+disable-model-invocation: true
 description: Create a step-by-step implementation plan file for a task in docs/ai/plans/ — explore first, write the plan, change no source code. Accepts a task description, a spec (docs/ai/specs/*.md) or a BMAD story/PRD file. Use before any non-trivial feature, refactor or bug fix.
 argument-hint: "<task description | spec file | BMAD ticket>"
 ---

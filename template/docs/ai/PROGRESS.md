@@ -1,6 +1,6 @@
 # Progress
 
-> Short, current, overwritten often. This file is injected at session start — keep it under ~40 lines.
+> Short, current, overwritten often. This file is injected at session start — keep it under 25 lines; history lives in git.
 
 ## Now
 - Active plan: _none_
