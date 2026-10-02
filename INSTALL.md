@@ -30,8 +30,10 @@ Tài liệu này hướng dẫn từng bước cách đưa claude-smart vào m�
 | Git | Có | `git --version` | https://git-scm.com (nên dùng bản mới) |
 | Claude Code | Có | `claude --version` | `npm install -g @anthropic-ai/claude-code` |
 | ast-grep | Nên có | `ast-grep --version` | `npm install -g @ast-grep/cli` |
-| uv / uvx | Tùy chọn | `uvx --version` | https://docs.astral.sh/uv/ (cho MCP serena, postgres) |
+| uv / uvx | Tùy chọn | `uvx --version` | Chỉ cần cho MCP serena, postgres. Windows: `winget install --id=astral-sh.uv -e` · macOS/Linux: `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 | Docker | Tùy chọn | `docker --version` | Chỉ cần nếu dùng `sandbox/` |
+
+> Cài công cụ mới xong (Node, ast-grep, uv…) mà vẫn báo `is not recognized` / `command not found`: **đóng hết terminal và mở lại** (kể cả VS Code) để PATH được cập nhật.
 
 Dự án đích **nên là một git repo** (`git init` nếu chưa có). Hooks dùng git để biết file nào đã thay đổi và chặn commit khi test fail.
 
