@@ -30,7 +30,8 @@
 ## Slash commands
 - `/bootstrap` — build/refresh the project map (first run)
 - `/explore <topic>` — read-only investigation via subagents
-- `/plan-task <task>` — write a plan file, no code changes
+- `/spec <feature>` — interview → spec with acceptance criteria (new or large features)
+- `/plan-task <task | spec | story>` — write a plan file, no code changes
 - `/implement` — do exactly one plan step, test, commit
 - `/checkpoint` — save state to disk before `/clear`
 - `/review-diff` — review the diff before merging

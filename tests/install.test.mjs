@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { tempDir, write } from './helpers.mjs';
-import { installProject, installGlobal, installMcp, mergeSettings, detectCommands, detectFrontends } from '../install.mjs';
+import { installProject, installGlobal, installMcp, mergeSettings, detectCommands, detectFrontends, detectBmad } from '../install.mjs';
 
 const read = (dir, rel) => readFileSync(path.join(dir, rel), 'utf8');
 
@@ -21,6 +21,8 @@ test('fresh install creates the full layout and detects npm commands', () => {
     '.claude/hooks/stop-verify.mjs',
     '.claude/agents/explorer.md',
     '.claude/skills/implement/SKILL.md',
+    '.claude/skills/spec/SKILL.md',
+    'docs/ai/specs/_TEMPLATE.md',
     '.claude/rules/_example.md',
     '.claude/smart.manifest.json',
   ]) assert.ok(existsSync(path.join(dir, f)), f);
@@ -160,6 +162,17 @@ test('detectFrontends finds UI packages and whether Playwright is set up', () =>
     ],
   );
   assert.deepEqual(installProject(dir, { dryRun: true }).frontends.length, 2);
+});
+
+test('detectBmad recognises v6 and v4 layouts', () => {
+  const v6 = tempDir();
+  write(v6, '_bmad/core/config.yaml', 'x: 1');
+  const v4 = tempDir();
+  write(v4, '.bmad-core/core-config.yaml', 'x: 1');
+  assert.ok(detectBmad(v6));
+  assert.ok(detectBmad(v4));
+  assert.ok(!detectBmad(tempDir()));
+  assert.equal(installProject(v6, { dryRun: true }).bmad, true);
 });
 
 test('global install writes agents and a managed block in ~/.claude/CLAUDE.md', () => {

@@ -1,17 +1,25 @@
 ---
 name: plan-task
-description: Create a step-by-step implementation plan file for a task in docs/ai/plans/ — explore first, write the plan, change no source code. Use before any non-trivial feature, refactor or bug fix.
-argument-hint: "<task description>"
+description: Create a step-by-step implementation plan file for a task in docs/ai/plans/ — explore first, write the plan, change no source code. Accepts a task description, a spec (docs/ai/specs/*.md) or a BMAD story/PRD file. Use before any non-trivial feature, refactor or bug fix.
+argument-hint: "<task description | spec file | BMAD story file>"
 ---
 
 Task: **$ARGUMENTS**
 
 You are planning only. Do not modify source code in this turn.
 
-1. If the task is ambiguous in a way that changes the design, ask the user (max 3 questions) before going further.
+1. **Find the source of truth.**
+   - If the argument is a file (a spec in `docs/ai/specs/`, a BMAD story/PRD/epic under `_bmad-output/`, `docs/stories/`,
+     `docs/prd.md`), read it fully — it defines *what* to build; the plan defines *how*.
+   - Otherwise look for a matching spec in `docs/ai/specs/` or BMAD story; use it if it clearly matches.
+   - A spec with `Status: draft` or a BMAD story not yet approved: ask the user whether to proceed or finish it first.
+   - No spec and the task is a new, user-facing or ambiguous feature: suggest `/spec` first (the user may decline).
+   - Otherwise, if the task is ambiguous in a way that changes the design, ask the user (max 3 questions).
 2. Explore with `explorer` subagents (parallel, one per angle). Read `docs/ai/architecture.md` and any matching `.claude/rules/` first.
-3. Hand the findings to the `planner` subagent to write `docs/ai/plans/YYYY-MM-DD-<slug>.md`.
+3. Hand the findings **and the source file path** to the `planner` subagent to write `docs/ai/plans/YYYY-MM-DD-<slug>.md`.
 4. Read the plan it produced and fix anything wrong or vague. Each step: one commit, keeps tests green, has a concrete test (UI steps: a named Playwright spec).
-5. Update `docs/ai/PROGRESS.md`: "Active plan: <path>", "Current step: 1".
-6. Commit the plan and PROGRESS (`docs: plan <slug>`).
-7. Tell the user: the plan path, the steps in one line each, open questions, and next: **review the plan, then `/clear` and `/implement`**.
+   With a source spec/story: every acceptance criterion appears in the plan's coverage table with the step and test that prove it — none missing.
+5. If the source is a claude-smart spec, write the plan path into its `Plan:` line.
+6. Update `docs/ai/PROGRESS.md`: "Active plan: <path>", "Current step: 1".
+7. Commit the plan, PROGRESS (and spec) (`docs: plan <slug>`).
+8. Tell the user: the plan path, the steps in one line each, open questions, and next: **review the plan, then `/clear` and `/implement`**.

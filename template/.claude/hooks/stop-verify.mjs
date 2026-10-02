@@ -4,7 +4,8 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { readInput, projectDir, loadConfig, run, git, tail, block, safe } from './lib.mjs';
 
-const DOC_ONLY = /^(docs\/|\.claude\/|[^/]+\.md$)/i;
+// Planning/doc-only changes (specs, plans, BMAD artifacts, any Markdown) never require a test run.
+const DOC_ONLY = /^(docs\/|\.claude\/|_bmad(-output)?\/|\.bmad-core\/)|\.(md|mdx)$/i;
 
 function changedFiles(dir) {
   const out = git(['status', '--porcelain', '--untracked-files=all'], dir);

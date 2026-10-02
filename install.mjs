@@ -191,6 +191,11 @@ export function detectFrontends(root) {
   });
 }
 
+/** BMAD-Method installed? v6 uses _bmad/ (artifacts in _bmad-output/), v4 used .bmad-core/ (artifacts in docs/). */
+export function detectBmad(root) {
+  return existsSync(path.join(root, '_bmad')) || existsSync(path.join(root, '.bmad-core'));
+}
+
 // ---------- project install ----------
 const LANGUAGES = { vi: 'Vietnamese', en: 'English', ja: 'Japanese', ko: 'Korean', zh: 'Chinese', fr: 'French', de: 'German', es: 'Spanish', th: 'Thai', id: 'Indonesian' };
 /** `vi` → `Vietnamese`; anything else is kept as written; empty means "match the user". */
@@ -286,6 +291,7 @@ export function installProject(target, { dryRun = false, force = false, lang } =
     warnings,
     config: readJson(path.join(target, '.claude', 'smart.config.json'), null),
     frontends: detectFrontends(target),
+    bmad: detectBmad(target),
   };
 }
 
@@ -413,6 +419,9 @@ function main(argv) {
       console.log(`  lintCmd:   ${lintCmd || '-'}`);
       console.log(`  formatCmd: ${formatCmd || '-'}`);
     }
+    if (res.bmad) {
+      console.log('  BMAD:      detected — use it for PRD/architecture/stories; implement with /plan-task <story file> → /implement');
+    }
     for (const fe of res.frontends || []) {
       const where = fe.dir || '(root)';
       console.log(
@@ -424,7 +433,7 @@ function main(argv) {
   }
   if (positional.length) {
     console.log('\nNext: open Claude Code in the project and run /bootstrap.');
-    console.log('Then for each task: /plan-task <task> → review → /clear → /implement (repeat) → /review-diff');
+    console.log('Then for each task: [/spec <feature>] → /plan-task <task|spec|story> → review → /clear → /implement (repeat) → /review-diff');
   }
   return 0;
 }

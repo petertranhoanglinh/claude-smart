@@ -35,6 +35,19 @@ function activePlan(dir) {
   return null;
 }
 
+/** docs/ai/specs/*.md with `Status: approved` whose `Plan:` line has no plan path yet. */
+function unplannedSpecs(dir) {
+  const specsDir = path.join(dir, 'docs', 'ai', 'specs');
+  if (!existsSync(specsDir)) return [];
+  return readdirSync(specsDir)
+    .filter((f) => f.endsWith('.md') && !f.startsWith('_'))
+    .filter((f) => {
+      const text = read(path.join(specsDir, f));
+      return /^- Status:\s*approved\b/im.test(text) && !/^- Plan:.*docs\/ai\/plans\/\S+\.md/im.test(text);
+    })
+    .map((f) => `docs/ai/specs/${f}`);
+}
+
 safe(() => {
   const input = readInput();
   const dir = projectDir(input);
@@ -66,6 +79,15 @@ safe(() => {
   const arch = read(path.join(dir, 'docs', 'ai', 'architecture.md'));
   const notes = [];
   if (!arch || arch.includes('_One paragraph: what the system does')) notes.push('Project map is empty: suggest the user runs `/bootstrap` first.');
+  for (const spec of unplannedSpecs(dir)) {
+    notes.push(`Spec approved but not planned yet: ${spec} — next step is \`/plan-task ${spec}\`.`);
+  }
+  if (existsSync(path.join(dir, '_bmad')) || existsSync(path.join(dir, '.bmad-core'))) {
+    notes.push(
+      'BMAD is installed: use it for planning only (PRD, architecture, stories in _bmad-output/ or docs/). ' +
+        'Implement a story with `/plan-task <story file>` → `/implement`, not with BMAD\'s dev agent.',
+    );
+  }
   if (!cfg.testCmd) notes.push('No testCmd in .claude/smart.config.json: tests are not enforced until it is set (`/bootstrap` sets it).');
   if (cfg.language) {
     notes.push(

@@ -11,6 +11,7 @@ Cài một lần bằng 1 lệnh, áp dụng cho dự án mới hoặc dự án 
 | Loạn context sau 10–15 phút | Quy trình Explore → Plan → `/clear` → Implement từng bước; `/checkpoint` trước khi `/clear`; đẩy việc đào code & chạy test sang subagent |
 | Sửa lung tung, sửa nhầm file | Plan liệt kê file được sửa; hook chặn file nhạy cảm & lệnh phá hoại; test chạy trước mỗi commit và trước khi kết thúc lượt |
 | Bịa API, UI vỡ không biết | Context7 (docs thư viện mới nhất), Playwright MCP (tự mở trình duyệt kiểm tra) |
+| Yêu cầu mơ hồ, AI tự đoán | `/spec` phỏng vấn bạn và ghi tiêu chí nghiệm thu; hoặc kết hợp **BMAD** để lập PRD, kiến trúc, story, rồi claude-smart code từng story ([USAGE.md mục 13](USAGE.md#13-kết-hợp-với-bmad-method)) |
 | Vi phạm kiến trúc | `/guardrails` biến luật kiến trúc thành ArchUnit / dependency-cruiser / import-linter chạy tự động |
 | Sợ cho AI toàn quyền | `sandbox/` chạy Claude Code trong Docker cách ly |
 
@@ -117,7 +118,8 @@ Nên **commit** toàn bộ các file này để cả team (và Claude ở máy k
 |---|---|
 | `/bootstrap [khu vực]` | Dựng/làm mới bản đồ dự án, quy chuẩn, lệnh test/lint (chạy lần đầu hoặc khi kiến trúc đổi nhiều) |
 | `/explore <câu hỏi>` | Điều tra chỉ đọc bằng subagent: "luồng thanh toán chạy thế nào?" |
-| `/plan-task <task>` | Tạo file plan, không sửa code |
+| `/spec <tính năng>` | Phỏng vấn bạn rồi viết spec có tiêu chí nghiệm thu AC-1, AC-2… (tính năng mới hoặc lớn) |
+| `/plan-task <task | spec | story>` | Tạo file plan (đọc spec hoặc story BMAD nếu có), không sửa code |
 | `/implement [plan\|bước\|all]` | Làm 1 bước của plan, test, commit |
 | `/checkpoint` | Lưu trạng thái ra file trước khi `/clear` |
 | `/review-diff [range]` | Review thay đổi trước khi merge |

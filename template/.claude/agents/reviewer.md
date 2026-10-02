@@ -15,6 +15,7 @@ Report only findings you can defend, most severe first:
 - **[bug]** wrong behaviour, with the concrete input that breaks it
 - **[test]** behaviour changed without a test that would catch a regression — UI changes (pages, forms, flows, conditional rendering) without a Playwright e2e spec count as this
 - **[scope]** change not covered by the plan
+- **[ac]** an acceptance criterion from the plan's source spec/story is not implemented or has no test proving it
 - **[convention]** violates docs/ai/conventions.md
 - **[security]** secrets, injection, unsafe input handling
 

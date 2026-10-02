@@ -174,7 +174,7 @@ Trong phiên `claude` của dự án:
 |---|---|---|
 | Hooks đã đăng ký | Gõ `/hooks` | Có SessionStart, PreToolUse (2), PostToolUse, Stop trỏ tới `.claude/hooks/*.mjs` |
 | Agents | Gõ `/agents` | Có explorer, planner, reviewer, test-runner |
-| Skills | Gõ `/` | Có bootstrap, explore, plan-task, implement, checkpoint, review-diff, guardrails, e2e-setup |
+| Skills | Gõ `/` | Có bootstrap, explore, plan-task, implement, checkpoint, review-diff, guardrails, e2e-setup, spec |
 | Bộ nhớ tự nạp | Hỏi: *"Session context của claude-smart nói gì?"* | Claude trích được PROGRESS, branch git, các ghi chú |
 | Chặn file nhạy cảm | Bảo Claude: *"Sửa file .env"* | Bị chặn với thông báo `claude-smart: editing ".env" is blocked` |
 | Chặn commit khi test fail | Làm hỏng 1 test rồi bảo Claude commit | Bị chặn với thông báo `commit blocked — tests fail` |

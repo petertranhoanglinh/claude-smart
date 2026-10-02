@@ -131,6 +131,27 @@ test('stop-verify: clean tree or docs-only changes pass', () => {
   assert.equal(runHook('stop-verify.mjs', dir, {}).code, 0);
 });
 
+test('stop-verify: BMAD artifacts and Markdown anywhere count as docs (no test run)', () => {
+  const dir = project({ testCmd: FAIL });
+  write(dir, '_bmad-output/planning-artifacts/prd.md', '# PRD');
+  write(dir, '_bmad/core/config.yaml', 'x: 1');
+  write(dir, 'notes/2026-10-02.md', 'note');
+  write(dir, 'docs/ai/specs/media.md', '# Spec');
+  assert.equal(runHook('stop-verify.mjs', dir, {}).code, 0);
+});
+
+test('session-start: approved spec without plan and BMAD are announced', () => {
+  const dir = project();
+  write(dir, 'docs/ai/specs/media-library.md', '# Spec: kho ảnh\n\n- Created: 2026-10-02\n- Status: approved\n- Plan: _(filled by /plan-task)_\n');
+  write(dir, 'docs/ai/specs/done.md', '# Spec\n- Status: approved\n- Plan: docs/ai/plans/2026-10-02-done.md\n');
+  write(dir, 'docs/ai/specs/draft.md', '# Spec\n- Status: draft\n');
+  write(dir, '_bmad/core/config.yaml', 'x: 1');
+  const ctx = JSON.parse(runHook('session-start.mjs', dir, {}).stdout).hookSpecificOutput.additionalContext;
+  assert.match(ctx, /Spec approved but not planned yet: docs\/ai\/specs\/media-library\.md/);
+  assert.doesNotMatch(ctx, /done\.md|draft\.md/);
+  assert.match(ctx, /BMAD is installed: use it for planning only/);
+});
+
 test('stop-verify: code change with failing tests blocks, capped by maxStopRetries', () => {
   const dir = project({ testCmd: FAIL, maxStopRetries: 2 });
   write(dir, 'src/a.js', 'x');

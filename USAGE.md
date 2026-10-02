@@ -18,8 +18,9 @@ Tài liệu này dành cho người **đã cài xong** claude-smart vào dự á
 10. [Khi bị hook chặn: đọc và xử lý](#10-khi-bị-hook-chặn-đọc-và-xử-lý)
 11. [Mẫu câu lệnh hay dùng](#11-mẫu-câu-lệnh-hay-dùng)
 12. [Nên và không nên](#12-nên-và-không-nên)
-13. [Cấu hình cơ bản](#13-cấu-hình-cơ-bản)
-14. [Câu hỏi thường gặp](#14-câu-hỏi-thường-gặp)
+13. [Kết hợp với BMAD-Method](#13-kết-hợp-với-bmad-method)
+14. [Cấu hình cơ bản](#14-cấu-hình-cơ-bản)
+15. [Câu hỏi thường gặp](#15-câu-hỏi-thường-gặp)
 
 ---
 
@@ -29,7 +30,9 @@ Tài liệu này dành cho người **đã cài xong** claude-smart vào dự á
 |---|---|---|
 | Hỏi, tìm hiểu | "API đăng bài Facebook nằm ở đâu?" | Chat bình thường, hoặc `/explore` nếu câu hỏi rộng |
 | Việc nhỏ (< 15 phút, 1–3 file) | Đổi chữ nút, sửa một bug rõ ràng, thêm 1 field | **Chat bình thường** ([mục 3](#3-việc-nhỏ-chat-bình-thường)) |
-| Việc vừa và lớn (nhiều bước, nhiều file, có quyết định thiết kế) | Tính năng kho ảnh R2, refactor một module | **`/plan-task` → `/clear` → `/implement`** ([mục 4](#4-việc-lớn-quy-trình-đầy-đủ)) |
+| Việc vừa (nhiều bước, nhiều file, yêu cầu đã rõ) | Refactor một module, sửa bug phức tạp | **`/plan-task` → `/clear` → `/implement`** ([mục 4](#4-việc-lớn-quy-trình-đầy-đủ)) |
+| Tính năng **mới** hoặc **lớn**, yêu cầu chưa rõ hết | Kho ảnh R2, phân quyền mới, trang báo cáo | **`/spec`** trước, rồi `/plan-task <spec>` ([mục 4, Bước 0](#bước-0-viết-spec-cho-tính-năng-mới-hoặc-lớn)) |
+| Cả một sản phẩm hoặc nhiều tính năng liên quan | Module mới hoàn toàn, MVP | **BMAD** lập PRD + kiến trúc + story, claude-smart code từng story ([mục 13](#13-kết-hợp-với-bmad-method)) |
 | Cả một danh sách việc | `docs/TASKS.md`, checklist milestone | Sắp xếp thành roadmap, rồi từng phase một ([mục 5](#5-làm-theo-một-checklist-dài)) |
 | Việc liên quan giao diện | Trang mới, form, bảng | Như trên, cộng spec Playwright ([mục 6](#6-làm-giao-diện-frontend--playwright)) |
 | Việc cần bạn tự làm | Tạo bucket Cloudflare, xin quyền Facebook, sửa `.env` | Nhờ Claude **hướng dẫn từng bước**, bạn tự thao tác |
@@ -75,6 +78,32 @@ Trang /dashboard/members: đổi nút "Xoá" thành màu đỏ và hỏi xác nh
 ## 4. Việc lớn: quy trình đầy đủ
 
 Ví dụ xuyên suốt: **"Kho ảnh R2 — Phase 1: BE storage"**.
+
+### Bước 0: Viết spec (cho tính năng mới hoặc lớn)
+
+Khi yêu cầu còn chưa rõ (ai được dùng, luồng ra sao, lỗi hiện thế nào), đừng để Claude tự đoán. Hãy để nó **phỏng vấn bạn**:
+
+```
+/spec Kho ảnh của tenant: upload ảnh lên R2, gắn nhãn, bật/tắt, xoá
+```
+
+Claude sẽ:
+1. Xem nhanh code liên quan (bảng nào, quyền nào đã có) để hỏi cho sát.
+2. Hỏi bạn **tối đa 3 vòng, mỗi vòng ≤ 5 câu**, phần lớn có sẵn lựa chọn và đáp án gợi ý. Bạn có thể trả lời *"bạn quyết định"*: Claude chọn cách đơn giản nhất và ghi rõ là giả định.
+3. Viết `docs/ai/specs/kho-anh.md` gồm: mục tiêu, vai trò/quyền, luồng chính và luồng phụ, quy tắc dữ liệu, **tiêu chí nghiệm thu AC-1, AC-2…** (dạng *Cho… khi… thì…*), bảng lỗi, ngoài phạm vi, câu hỏi mở.
+4. Tóm tắt cho bạn duyệt. Bạn chọn duyệt hoặc yêu cầu sửa. Duyệt xong thì commit.
+
+**Khi duyệt spec, kiểm tra kỹ nhất mục tiêu chí nghiệm thu:** mỗi dòng AC sẽ trở thành ít nhất 1 test. Thiếu AC nghĩa là thiếu test, tức là tính năng có thể sai mà không ai biết.
+
+Sau đó lập kế hoạch **từ spec**:
+
+```
+/plan-task docs/ai/specs/kho-anh.md
+```
+
+Plan sẽ có thêm bảng **"AC nào được kiểm tra ở bước nào, bằng test nào"**. `/review-diff` sẽ báo lỗi `[ac]` nếu còn AC chưa được làm hoặc chưa có test. Khi bước cuối xong, spec tự chuyển sang `Status: implemented`.
+
+> Bỏ qua Bước 0 với việc nhỏ hoặc việc đã rõ: cứ `/plan-task` thẳng. Claude sẽ gợi ý `/spec` nếu thấy yêu cầu còn mơ hồ.
 
 ### Bước 1: Lập kế hoạch (Claude chỉ đọc, không sửa code)
 
@@ -303,17 +332,73 @@ Hướng dẫn tôi từng bước tạo bucket R2 và API token theo Phase 0, k
 | 1 phiên Claude cho mỗi dự án | Mở terminal và panel VS Code cùng sửa code |
 | Tự làm việc cần đăng nhập hoặc secret | Dán token hay mật khẩu vào chat |
 
-## 13. Cấu hình cơ bản
+## 13. Kết hợp với BMAD-Method
+
+[BMAD-Method](https://github.com/bmad-code-org/BMAD-METHOD) mạnh ở **khâu lên kế hoạch**: nhiều agent đóng vai Analyst, PM, Architect, Scrum Master viết PRD, kiến trúc và chia story. claude-smart mạnh ở **khâu code**: plan từng bước, hook ép test, an toàn. Dùng mỗi bên đúng phần của nó:
+
+```
+ BMAD (lên kế hoạch)                         claude-smart (thực thi)
+┌──────────────────────────────┐            ┌──────────────────────────────────────────┐
+│ brief → PRD → architecture   │  story.md  │ /plan-task <story> → /clear → /implement │
+│ → epics → stories            │ ─────────▶ │ (test + hook + commit) → /review-diff    │
+└──────────────────────────────┘            └──────────────────────────────────────────┘
+```
+
+### 13.1 Cài BMAD vào dự án đã có claude-smart
+
+```powershell
+cd E:\code\my-app
+npx bmad-method install        # chọn IDE: Claude Code; cần Node 20+
+```
+
+- BMAD v6 tạo `_bmad/` (agent, workflow) và ghi tài liệu vào `_bmad-output/`. Thư mục này đổi được khi cài; bản v4 cũ dùng `docs/prd.md`, `docs/stories/`.
+- Các lệnh của BMAD có tiền tố riêng (ví dụ `/bmad-help`), không trùng lệnh của claude-smart.
+- Chạy lại installer claude-smart để nó nhận ra BMAD: `node E:\start-up\claude-smart\install.mjs .`. Output sẽ có dòng `BMAD: detected`.
+
+### 13.2 Quy trình
+
+1. **Lên kế hoạch bằng BMAD:** dùng các agent Analyst/PM/Architect/Scrum Master để có PRD, tài liệu kiến trúc và các file story. Gõ `/bmad-help` để xem bước tiếp theo BMAD gợi ý.
+   - Trong lúc này hook claude-smart **không chặn**: thay đổi chỉ ở file `.md`, `_bmad/` hay `_bmad-output/` được coi là tài liệu, không bắt chạy test.
+2. **Code từng story bằng claude-smart:**
+   ```
+   /plan-task _bmad-output/<đường-dẫn>/story-1.2.md
+   /clear
+   /implement            (lặp lại tới hết plan)
+   /review-diff main...HEAD
+   ```
+   Plan đọc tiêu chí nghiệm thu trong story và lập bảng phủ AC. Khi xong, story được đổi `Status` thành `Done` (chỉ sửa đúng dòng đó).
+3. Sang story tiếp theo: `/clear` rồi lặp lại bước 2.
+
+### 13.3 Luật để hai bên không đụng nhau
+
+| Làm | Không làm |
+|---|---|
+| Dùng agent BMAD để **viết tài liệu**: PRD, kiến trúc, story | Dùng agent **dev** của BMAD để code (nó sẽ bỏ qua plan và quy trình từng bước của claude-smart) |
+| `/plan-task <file story>` cho từng story | Đưa cả PRD vào một `/plan-task` |
+| Để `docs/ai/architecture.md` **link tới** tài liệu kiến trúc của BMAD | Chép lại nội dung kiến trúc vào hai nơi |
+| Dùng `/spec` cho tính năng lẻ nhỏ hơn một epic | Dùng cả BMAD lẫn `/spec` cho cùng một tính năng |
+
+Hook claude-smart (chặn `.env`, test trước commit, Playwright cho UI…) **luôn chạy**, kể cả khi bạn dùng lệnh của BMAD.
+
+### 13.4 Chọn `/spec` hay BMAD?
+
+| Tình huống | Chọn |
+|---|---|
+| 1 tính năng, làm trong khoảng 1–3 ngày | `/spec` |
+| Nhiều tính năng liên quan, cần PRD và kiến trúc tổng thể, nhiều người cùng làm | BMAD |
+| Dự án mới từ con số 0 | BMAD cho giai đoạn đầu, sau đó `/spec` cho từng tính năng lẻ |
+
+## 14. Cấu hình cơ bản
 
 Mọi lệnh dưới đây chạy **trong terminal, ở thư mục gốc dự án**. Cấu hình của claude-smart nằm trong `.claude/smart.config.json`. Claude bị chặn sửa thẳng file này, nên mọi thay đổi đi qua `configure.mjs` (khi Claude chạy lệnh này, bạn sẽ được hỏi duyệt). Đổi xong, gõ `/clear` trong Claude để chắc chắn phiên đang chạy nhận cấu hình mới.
 
-### 13.1 Xem cấu hình hiện tại
+### 14.1 Xem cấu hình hiện tại
 
 ```powershell
 node .claude/hooks/configure.mjs
 ```
 
-### 13.2 Các thiết lập hay đổi
+### 14.2 Các thiết lập hay đổi
 
 | Muốn | Lệnh |
 |---|---|
@@ -337,7 +422,7 @@ node .claude/hooks/configure.mjs
 node .claude/hooks/configure.mjs language=Vietnamese envAccess=keys requireProgressUpdate=false
 ```
 
-### 13.3 Thiết lập dạng danh sách (`protectedPaths`, `fileGlobs`)
+### 14.3 Thiết lập dạng danh sách (`protectedPaths`, `fileGlobs`)
 
 Giá trị phải là mảng JSON và **ghi đè cả danh sách**, nên nhớ giữ lại các mục cũ.
 
@@ -353,7 +438,7 @@ node .claude/hooks/configure.mjs 'protectedPaths=[".claude/settings.json",".clau
 
 > Ngại gõ? Nói với Claude: *"Thêm `backend/migrations/**` vào protectedPaths."* Claude sẽ tự chạy `configure.mjs` và bạn chỉ việc bấm duyệt.
 
-### 13.4 Bộ cấu hình mẫu
+### 14.4 Bộ cấu hình mẫu
 
 **Nghiêm ngặt (mặc định, khuyến nghị cho code quan trọng):**
 ```powershell
@@ -372,7 +457,7 @@ node .claude/hooks/configure.mjs strict=false
 node .claude/hooks/configure.mjs strict=true
 ```
 
-### 13.5 Quyền riêng của bạn (`.claude/settings.local.json`)
+### 14.5 Quyền riêng của bạn (`.claude/settings.local.json`)
 
 File này **không commit** (đã nằm trong `.gitignore`), chỉ áp dụng cho máy bạn. Dùng để bớt bị hỏi quyền cho các lệnh bạn tin tưởng. Tạo file `.claude/settings.local.json`:
 
@@ -395,7 +480,7 @@ File này **không commit** (đã nằm trong `.gitignore`), chỉ áp dụng ch
 - **Đừng** thêm `Bash(node .claude/hooks/configure.mjs*)` vào `allow`. Đây là chốt để bạn kiểm soát việc nới luật.
 - Cấu hình dùng chung cho cả team (`.claude/settings.json`) bị bảo vệ; muốn sửa thì sửa tay rồi commit.
 
-### 13.6 MCP servers
+### 14.6 MCP servers
 
 ```powershell
 node E:\start-up\claude-smart\install.mjs --list-mcp                         # xem có gì
@@ -404,7 +489,7 @@ node E:\start-up\claude-smart\install.mjs . --mcp-only --mcp=playwright,context7
 
 Trong Claude, gõ `/mcp` để xem server nào đang chạy. Server cần biến môi trường (`DATABASE_URI`, `GITHUB_PERSONAL_ACCESS_TOKEN`…) thì đặt biến trong terminal trước khi mở `claude`/VS Code.
 
-### 13.7 Kiểm tra nhanh mọi thứ còn chạy đúng
+### 14.7 Kiểm tra nhanh mọi thứ còn chạy đúng
 
 ```powershell
 node .claude/hooks/configure.mjs                  # cấu hình
@@ -415,7 +500,7 @@ node E:\start-up\claude-smart\install.mjs . --dry-run   # có bản claude-smart
 
 Trong Claude: `/hooks` (hook đã bật), `/agents`, `/mcp`.
 
-## 14. Câu hỏi thường gặp
+## 15. Câu hỏi thường gặp
 
 **Chat bình thường có bị hạn chế gì không?**
 Không. Bạn hỏi và sửa như trước. Khác biệt duy nhất là hook kiểm tra test và PROGRESS trước khi Claude trả lời xong ([mục 3](#3-việc-nhỏ-chat-bình-thường)).
