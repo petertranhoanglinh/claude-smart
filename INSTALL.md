@@ -1,6 +1,6 @@
 # Hướng dẫn thêm claude-smart vào dự án
 
-Tài liệu này hướng dẫn từng bước cách đưa claude-smart vào một dự án: dự án mới, dự án đang chạy, monorepo, và cách để cả team dùng chung. Phần giới thiệu tổng quan và quy trình làm việc hằng ngày xem trong [README.md](README.md).
+Tài liệu này hướng dẫn từng bước cách đưa claude-smart vào một dự án: dự án mới, dự án đang chạy, monorepo, và cách để cả team dùng chung. Phần giới thiệu tổng quan xem trong [README.md](README.md); cách làm việc hằng ngày sau khi cài xem trong [USAGE.md](USAGE.md).
 
 ---
 
