@@ -348,11 +348,24 @@ Hướng dẫn tôi từng bước tạo bucket R2 và API token theo Phase 0, k
 
 ### 13.1 Cài BMAD vào dự án đã có claude-smart
 
-Cài **một trong hai** cách, chạy ở thư mục gốc dự án:
+**Cách khuyên dùng: một lệnh, cài đúng skill, đúng chỗ cho Claude Code** (chạy ở thư mục gốc dự án):
 
 ```powershell
 cd E:\code\my-app
-npx skills add bmad-code-org/BMAD-METHOD        # cài dạng skills (cần Node)
+npx -y skills add bmad-code-org/BMAD-METHOD -a claude-code --copy -y -s bmad bmod-core-tools bmod-method bmad-customize bmad-advanced-elicitation bmad-agent-analyst bmad-agent-architect bmad-agent-pm bmad-agent-ux-designer bmad-architecture bmad-brainstorming bmad-deep-recon bmad-forge-idea bmad-party-mode bmad-prd bmad-prfaq bmad-product-brief bmad-project-context bmad-spec bmad-ticket bmad-ux bmad-correct-course bmad-walkthrough
+```
+
+- `-a claude-code`: cài vào `.claude/skills/`, nơi Claude Code đọc skill. **Thiếu cờ này**, trình cài sẽ hỏi chọn agent; chọn nhầm (Antigravity, Gemini CLI, GitHub Copilot…) thì skill rơi vào `.agents/skills/` và **Claude Code không thấy**.
+- `-s …`: chỉ cài các skill phân tích và lên kế hoạch, bỏ `bmad-agent-dev`, `bmad-build`, `bmad-build-auto`, `bmad-code-review`, `bmad-review`, `bmad-qa-generate-e2e-tests`.
+- `--copy`: chép file thay vì tạo symlink (Windows hay lỗi symlink).
+- Cài xong, **commit** `.claude/skills/bmad*`, `.claude/skills/bmod*` và `skills-lock.json` để cả team dùng chung.
+
+Lỡ cài nhầm vào `.agents/skills/`? Xem các skill đang gắn cho agent nào bằng `npx skills ls`, gỡ bằng `npx skills remove <tên các skill> -a <agent> -y`, rồi chạy lại lệnh ở trên. **Đừng dùng `-s '*'`** khi gỡ: nó sẽ gỡ luôn các skill của claude-smart.
+
+**Hoặc cài kiểu tương tác:**
+
+```powershell
+npx skills add bmad-code-org/BMAD-METHOD        # cài dạng skills (cần Node). Khi được hỏi agent: chọn Claude Code
 ```
 
 ```
