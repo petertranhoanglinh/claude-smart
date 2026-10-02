@@ -95,42 +95,73 @@ export function upsertBlock(text, block) {
 }
 
 // ---------- stack detection ----------
-export function detectCommands(dir) {
+/**
+ * Detect one project. `sub` is '' for the repo root, or a subdirectory name for monorepo parts;
+ * test commands for subdirectories are written cwd-independently (no `cd`), so they can be chained.
+ */
+function detectStack(root, sub = '') {
+  const dir = path.join(root, sub);
   const has = (f) => existsSync(path.join(dir, f));
+  const glob = (g) => (sub ? `${sub}/${g}` : g);
   const cfg = {};
   if (has('package.json')) {
     const pkg = readJson(path.join(dir, 'package.json'), {});
     const deps = { ...pkg.dependencies, ...pkg.devDependencies };
     const pm = has('pnpm-lock.yaml') ? 'pnpm' : has('yarn.lock') ? 'yarn' : has('bun.lockb') || has('bun.lock') ? 'bun' : 'npm';
     const test = pkg.scripts?.test;
-    if (test && !/no test specified/.test(test)) cfg.testCmd = pm === 'npm' ? 'npm test' : `${pm} test`;
+    if (test && !/no test specified/.test(test)) {
+      const inDir = { npm: `npm --prefix ${sub} test`, pnpm: `pnpm --dir ${sub} test`, yarn: `yarn --cwd ${sub} test`, bun: `bun --cwd ${sub} test` };
+      cfg.testCmd = sub ? inDir[pm] : pm === 'npm' ? 'npm test' : `${pm} test`;
+    }
     if (deps.prettier) cfg.formatCmd = 'npx prettier --write --log-level warn {file}';
     if (deps.eslint) cfg.lintCmd = 'npx eslint --no-warn-ignored {file}';
     if (deps['@biomejs/biome']) {
       cfg.formatCmd ??= 'npx biome format --write {file}';
       cfg.lintCmd ??= 'npx biome lint {file}';
     }
-    cfg.fileGlobs = ['**/*.{js,jsx,ts,tsx,mjs,cjs,vue,svelte}'];
+    cfg.fileGlobs = [glob('**/*.{js,jsx,ts,tsx,mjs,cjs,vue,svelte}')];
   } else if (has('pyproject.toml') || has('requirements.txt') || has('setup.py')) {
     const py = has('pyproject.toml') ? readFileSync(path.join(dir, 'pyproject.toml'), 'utf8') : '';
-    cfg.testCmd = has('uv.lock') ? 'uv run pytest -q' : has('poetry.lock') ? 'poetry run pytest -q' : 'pytest -q';
+    if (has('uv.lock')) cfg.testCmd = sub ? `uv run --directory ${sub} pytest -q` : 'uv run pytest -q';
+    else if (has('poetry.lock')) cfg.testCmd = sub ? `poetry -C ${sub} run pytest -q` : 'poetry run pytest -q';
+    else cfg.testCmd = sub ? `pytest -q ${sub}` : 'pytest -q';
     if (/ruff/.test(py)) {
       cfg.formatCmd = 'ruff format {file}';
       cfg.lintCmd = 'ruff check {file}';
     } else if (/black/.test(py)) cfg.formatCmd = 'black -q {file}';
-    cfg.fileGlobs = ['**/*.py'];
+    cfg.fileGlobs = [glob('**/*.py')];
   } else if (has('go.mod')) {
-    Object.assign(cfg, { testCmd: 'go test ./...', formatCmd: 'gofmt -w {file}', fileGlobs: ['**/*.go'] });
+    Object.assign(cfg, { testCmd: sub ? `go -C ${sub} test ./...` : 'go test ./...', formatCmd: 'gofmt -w {file}', fileGlobs: [glob('**/*.go')] });
   } else if (has('Cargo.toml')) {
-    Object.assign(cfg, { testCmd: 'cargo test --quiet', formatCmd: 'rustfmt {file}', fileGlobs: ['**/*.rs'] });
+    const testCmd = sub ? `cargo test --quiet --manifest-path ${sub}/Cargo.toml` : 'cargo test --quiet';
+    Object.assign(cfg, { testCmd, formatCmd: 'rustfmt {file}', fileGlobs: [glob('**/*.rs')] });
   } else if (has('pom.xml')) {
-    Object.assign(cfg, { testCmd: 'mvn -q test', fileGlobs: ['**/*.java', '**/*.kt'] });
+    Object.assign(cfg, { testCmd: sub ? `mvn -q -f ${sub}/pom.xml test` : 'mvn -q test', fileGlobs: [glob('**/*.java'), glob('**/*.kt')] });
   } else if (has('build.gradle') || has('build.gradle.kts')) {
-    const gradlew = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
-    Object.assign(cfg, { testCmd: has('gradlew') ? `${gradlew} test -q` : 'gradle test -q', fileGlobs: ['**/*.java', '**/*.kt'] });
+    const win = process.platform === 'win32';
+    const wrapper = sub ? (win ? `${sub}\\gradlew.bat` : `./${sub}/gradlew`) : win ? 'gradlew.bat' : './gradlew';
+    const testCmd = `${has('gradlew') ? wrapper : 'gradle'}${sub ? ` -p ${sub}` : ''} test -q`;
+    Object.assign(cfg, { testCmd, fileGlobs: [glob('**/*.java'), glob('**/*.kt')] });
   } else if (readdirSync(dir).some((f) => /\.(sln|csproj)$/.test(f))) {
-    Object.assign(cfg, { testCmd: 'dotnet test --nologo -v q', fileGlobs: ['**/*.cs'] });
+    Object.assign(cfg, { testCmd: sub ? `dotnet test ${sub} --nologo -v q` : 'dotnet test --nologo -v q', fileGlobs: [glob('**/*.cs')] });
   }
+  return cfg;
+}
+
+export function detectCommands(dir) {
+  const rootCfg = detectStack(dir);
+  if (Object.keys(rootCfg).length) return rootCfg;
+
+  // Monorepo without a root manifest: look one level down (backend/, frontend/, services/x is left to /bootstrap).
+  const subs = readdirSync(dir).filter(
+    (d) => !d.startsWith('.') && !['node_modules', 'docs', 'dist', 'build', 'vendor'].includes(d) && statSync(path.join(dir, d)).isDirectory(),
+  );
+  const parts = subs.map((d) => detectStack(dir, d)).filter((c) => Object.keys(c).length);
+  if (!parts.length) return {};
+  const cfg = { fileGlobs: parts.flatMap((c) => c.fileGlobs || []) };
+  const tests = parts.map((c) => c.testCmd).filter(Boolean);
+  if (tests.length) cfg.testCmd = tests.join(' && ');
+  // Per-file lint/format differ per part and depend on each part's cwd/config: left for /bootstrap.
   return cfg;
 }
 

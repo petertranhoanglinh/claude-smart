@@ -109,6 +109,18 @@ test('installMcp merges servers without replacing existing ones', () => {
   assert.throws(() => installMcp(dir, ['nope']), /Unknown MCP/);
 });
 
+test('detectCommands for a monorepo without root manifest', () => {
+  const dir = tempDir();
+  write(dir, 'backend/go.mod', 'module x');
+  write(dir, 'frontend/package.json', { scripts: { dev: 'next dev' }, devDependencies: { eslint: '9' } });
+  write(dir, 'web/package.json', { scripts: { test: 'vitest run' } });
+  write(dir, 'docs/package.json', { scripts: { test: 'x' } });
+  const cfg = detectCommands(dir);
+  assert.equal(cfg.testCmd, 'go -C backend test ./... && npm --prefix web test');
+  assert.deepEqual(cfg.fileGlobs, ['backend/**/*.go', 'frontend/**/*.{js,jsx,ts,tsx,mjs,cjs,vue,svelte}', 'web/**/*.{js,jsx,ts,tsx,mjs,cjs,vue,svelte}']);
+  assert.equal(cfg.lintCmd, undefined);
+});
+
 test('global install writes agents and a managed block in ~/.claude/CLAUDE.md', () => {
   const home = tempDir();
   write(home, '.claude/CLAUDE.md', '# mine\n');
