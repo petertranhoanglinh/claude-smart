@@ -1,0 +1,54 @@
+// REFERENCE (claude-smart /e2e-setup): taken from a working Next.js dashboard with a Go API and a JWT in
+// localStorage. Adapt names, env var, storage key, routes and texts to the target project.
+import { test, expect, mockApi, fakeJwt, loginAs, TEST_USER } from "./fixtures";
+
+test("chưa đăng nhập vào /dashboard thì bị đưa về /login", async ({ page, pageErrors }) => {
+  await mockApi(page, {});
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByLabel("Email")).toBeVisible();
+  expect(pageErrors).toEqual([]);
+});
+
+test("đăng nhập thành công thì vào dashboard", async ({ page, pageErrors }) => {
+  const token = fakeJwt({ user_id: TEST_USER.userId, tenant_id: TEST_USER.tenantId, role: "ADMIN" });
+  let loginBody: unknown;
+  const api = await mockApi(page, {
+    "POST /auth/login": (route) => {
+      loginBody = route.request().postDataJSON();
+      return { body: { Token: token, TenantID: TEST_USER.tenantId, Role: "ADMIN" } };
+    },
+  });
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("admin@example.com");
+  await page.getByLabel("Mật khẩu").fill("secret123");
+  await page.getByRole("button", { name: "Đăng nhập" }).click();
+
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading", { name: "Tổng quan" })).toBeVisible();
+  expect(loginBody).toEqual({ Email: "admin@example.com", Password: "secret123" });
+  expect(api.unmocked).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
+test("sai mật khẩu thì hiện đúng lỗi từ backend", async ({ page }) => {
+  await mockApi(page, {
+    "POST /auth/login": { status: 401, body: { Error: "Email hoặc mật khẩu không đúng" } },
+  });
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("admin@example.com");
+  await page.getByLabel("Mật khẩu").fill("wrong");
+  await page.getByRole("button", { name: "Đăng nhập" }).click();
+
+  await expect(page.getByText("Email hoặc mật khẩu không đúng")).toBeVisible();
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test("đã đăng nhập mà mở /login thì về thẳng dashboard", async ({ page }) => {
+  await mockApi(page, {});
+  await loginAs(page);
+  await page.goto("/login");
+  await expect(page).toHaveURL(/\/dashboard$/);
+});

@@ -121,6 +121,7 @@ Nên **commit** toàn bộ các file này để cả team (và Claude ở máy k
 | `/checkpoint` | Lưu trạng thái ra file trước khi `/clear` |
 | `/review-diff [range]` | Review thay đổi trước khi merge |
 | `/guardrails [luật]` | Biến luật kiến trúc thành check tự động |
+| `/e2e-setup [thư mục frontend]` | Cài Playwright e2e cho frontend (giả lập backend), nối vào `testCmd` |
 
 > Tên `/plan-task` và `/review-diff` được chọn để không trùng lệnh có sẵn `/plan`, `/review` của Claude Code.
 
@@ -247,7 +248,24 @@ Claude sẽ đề xuất 3–8 luật từ `architecture.md`, chờ bạn duyệ
 
 Các check được nối vào `testCmd`/`lintCmd`, nên hook `post-edit`, `guard-bash` (trước commit) và `stop-verify` sẽ bắn lỗi ngay khi Claude vi phạm → Claude tự sửa trước khi báo xong. Code cũ đang vi phạm được ghi thành baseline, không bị refactor ồ ạt.
 
-### 5.5 Docker sandbox — cho Claude toàn quyền mà không sợ hỏng máy
+### 5.5 Playwright: test giao diện bắt buộc
+
+Với dự án có frontend (Next.js, React, Vue, Svelte, Angular…), claude-smart áp dụng luật **mọi thay đổi UI phải có test Playwright** (`.claude/rules/ui-e2e.md`, tự nạp khi Claude sửa file `.tsx/.jsx/.vue/.svelte`):
+
+- `/implement` viết spec e2e cho mỗi bước UI; `/review-diff` báo lỗi `[test]` nếu UI đổi mà không có spec.
+- Backend được **giả lập trong từng test** (`mockApi(page, {"GET /path": {body}})`), nên không cần DB hay backend thật; request nào quên mock làm test fail rõ ràng.
+- `testCmd` chỉ chạy e2e khi frontend có thay đổi, nên commit backend vẫn nhanh.
+- Có MCP `playwright` thì Claude còn tự mở trình duyệt xem giao diện sau khi sửa.
+
+Cài cho dự án (1 lần, trong Claude):
+
+```
+/e2e-setup frontend
+```
+
+Installer tự báo khi phát hiện frontend chưa có Playwright. Chạy tay: `npm run test:e2e` (hoặc `npm run test:e2e:ui` để xem từng bước trên giao diện).
+
+### 5.6 Docker sandbox — cho Claude toàn quyền mà không sợ hỏng máy
 
 Dùng cho việc nặng: refactor cả module, nâng cấp dependency, chạy `/implement all` qua đêm.
 

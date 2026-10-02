@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { tempDir, write } from './helpers.mjs';
-import { installProject, installGlobal, installMcp, mergeSettings, detectCommands } from '../install.mjs';
+import { installProject, installGlobal, installMcp, mergeSettings, detectCommands, detectFrontends } from '../install.mjs';
 
 const read = (dir, rel) => readFileSync(path.join(dir, rel), 'utf8');
 
@@ -129,6 +129,22 @@ test('--lang sets language on fresh and existing installs', () => {
   assert.equal(JSON.parse(read(dir, '.claude/smart.config.json')).language, 'English');
   installProject(dir);
   assert.equal(JSON.parse(read(dir, '.claude/smart.config.json')).language, 'English', 'kept without --lang');
+});
+
+test('detectFrontends finds UI packages and whether Playwright is set up', () => {
+  const dir = tempDir();
+  write(dir, 'backend/go.mod', 'module x');
+  write(dir, 'frontend/package.json', { dependencies: { next: '16', react: '19' } });
+  write(dir, 'admin/package.json', { dependencies: { vue: '3' }, devDependencies: { '@playwright/test': '1' } });
+  write(dir, 'tools/package.json', { dependencies: { lodash: '4' } });
+  assert.deepEqual(
+    detectFrontends(dir).sort((a, b) => a.dir.localeCompare(b.dir)),
+    [
+      { dir: 'admin', playwright: true },
+      { dir: 'frontend', playwright: false },
+    ],
+  );
+  assert.deepEqual(installProject(dir, { dryRun: true }).frontends.length, 2);
 });
 
 test('global install writes agents and a managed block in ~/.claude/CLAUDE.md', () => {

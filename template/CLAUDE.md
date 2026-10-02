@@ -35,3 +35,4 @@
 - `/checkpoint` — save state to disk before `/clear`
 - `/review-diff` — review the diff before merging
 - `/guardrails` — turn architecture rules into executable lint/test checks
+- `/e2e-setup` — set up Playwright e2e tests for the frontend (backend mocked)

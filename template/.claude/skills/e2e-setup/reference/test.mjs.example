@@ -1,0 +1,37 @@
+// REFERENCE (claude-smart /e2e-setup): monorepo backend/ (Go) + frontend/ (Next.js). Adapt dirs and commands.
+// testCmd của claude-smart: chỉ chạy phần bị ảnh hưởng để hook (trước commit / khi Claude dừng) đủ nhanh.
+//   backend/ đổi  → go test ./...
+//   frontend/ đổi → tsc --noEmit + Playwright e2e (frontend/e2e, backend được giả lập)
+//   không xác định được thay đổi (không có git, cây sạch) → go test + tsc, bỏ e2e
+// Chạy toàn bộ: node scripts/claude-smart/test.mjs --all
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+const all = process.argv.includes('--all');
+
+function changedFiles() {
+  const run = (args) => spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+  const tracked = run(['diff', '--name-only', 'HEAD']);
+  const untracked = run(['ls-files', '--others', '--exclude-standard']);
+  if (tracked.status !== 0) return null;
+  return `${tracked.stdout}\n${untracked.stdout}`.split(/\r?\n/).filter(Boolean);
+}
+
+function step(label, cmd, args, cwd) {
+  console.log(`\n▶ ${label}`);
+  const res = spawnSync(cmd, args, { cwd: path.join(root, cwd), stdio: 'inherit', shell: true, env: { ...process.env, CI: '1' } });
+  if (res.status !== 0) {
+    console.error(`\n✘ ${label} thất bại (exit ${res.status ?? 'signal'})`);
+    process.exit(res.status || 1);
+  }
+}
+
+const changed = all ? null : changedFiles();
+const touched = (prefix) => all || !changed || changed.length === 0 || changed.some((f) => f.startsWith(prefix));
+const frontendChanged = all || (changed?.some((f) => f.startsWith('frontend/')) ?? false);
+
+if (touched('backend/')) step('backend: go test', 'go', ['test', './...'], 'backend');
+if (touched('frontend/')) step('frontend: tsc --noEmit', 'npx', ['tsc', '--noEmit'], 'frontend');
+if (frontendChanged) step('frontend: Playwright e2e', 'npx', ['playwright', 'test'], 'frontend');
+console.log('\n✔ Tất cả kiểm tra đã qua');

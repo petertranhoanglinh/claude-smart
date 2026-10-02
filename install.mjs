@@ -166,6 +166,24 @@ export function detectCommands(dir) {
   return cfg;
 }
 
+const UI_DEPS = ['next', 'react', 'vue', 'svelte', '@sveltejs/kit', 'nuxt', '@angular/core', 'solid-js', 'astro'];
+
+/** Web frontends at the root or one level down: [{ dir, playwright }] (dir '' = root). */
+export function detectFrontends(root) {
+  const dirs = [''];
+  for (const d of readdirSync(root)) {
+    if (!d.startsWith('.') && d !== 'node_modules' && statSync(path.join(root, d)).isDirectory()) dirs.push(d);
+  }
+  return dirs.flatMap((dir) => {
+    const pkg = readJson(path.join(root, dir, 'package.json'), null);
+    if (!pkg) return [];
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    if (!UI_DEPS.some((d) => d in deps)) return [];
+    const playwright = '@playwright/test' in deps || readdirSync(path.join(root, dir)).some((f) => /^playwright\.config\./.test(f));
+    return [{ dir, playwright }];
+  });
+}
+
 // ---------- project install ----------
 const LANGUAGES = { vi: 'Vietnamese', en: 'English', ja: 'Japanese', ko: 'Korean', zh: 'Chinese', fr: 'French', de: 'German', es: 'Spanish', th: 'Thai', id: 'Indonesian' };
 /** `vi` → `Vietnamese`; anything else is kept as written; empty means "match the user". */
@@ -256,7 +274,12 @@ export function installProject(target, { dryRun = false, force = false, lang } =
   }
 
   plan.write(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`, 'manifest');
-  return { actions: plan.actions, warnings, config: readJson(path.join(target, '.claude', 'smart.config.json'), null) };
+  return {
+    actions: plan.actions,
+    warnings,
+    config: readJson(path.join(target, '.claude', 'smart.config.json'), null),
+    frontends: detectFrontends(target),
+  };
 }
 
 // ---------- MCP servers ----------
@@ -382,6 +405,14 @@ function main(argv) {
       console.log(`\n  testCmd:   ${testCmd || '(not detected — /bootstrap will set it)'}`);
       console.log(`  lintCmd:   ${lintCmd || '-'}`);
       console.log(`  formatCmd: ${formatCmd || '-'}`);
+    }
+    for (const fe of res.frontends || []) {
+      const where = fe.dir || '(root)';
+      console.log(
+        fe.playwright
+          ? `  frontend:  ${where} — Playwright found ✔`
+          : `  frontend:  ${where} — no Playwright yet → in Claude run /e2e-setup${fe.dir ? ` ${fe.dir}` : ''}, and add --mcp=playwright`,
+      );
     }
   }
   if (positional.length) {

@@ -15,6 +15,7 @@ Build the long-term project memory. Work read-only on source code; write only th
 - `docs/ai/architecture.md` — fill every section of the existing template. Map, not prose: paths, responsibilities, flows. ≤ 150 lines.
 - `docs/ai/conventions.md` — describe what the code actually does (look at 3–5 representative files and the lint/format config). ≤ 100 lines.
 - `CLAUDE.md` — fill the "Commands" and "Architecture in one screen" sections. Keep CLAUDE.md under ~80 lines; detail belongs in docs/ai/.
+- If the repo has a web frontend and no `playwright.config.*`, list `/e2e-setup` as the recommended next step in your summary.
 - For large modules with their own rules, create `.claude/rules/<module>.md` with `paths:` frontmatter (see `.claude/rules/_example.md`) so those rules load only when that code is touched.
 
 ## 3. Configure enforcement

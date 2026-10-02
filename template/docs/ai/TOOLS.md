@@ -16,7 +16,8 @@ Keep using Grep for plain text, config keys, log messages.
 - **context7** — current docs for a library/framework version. Use before using an API you are not certain about.
 
 ## Verify in the real world (MCP)
-- **playwright** — after UI changes: open the page, exercise the flow, take a screenshot, check layout and console errors. A UI step is not done until this passes (when the server is configured).
+- **playwright** (MCP) — after UI changes: open the page, exercise the flow, take a screenshot, check layout and console errors.
+- **Playwright Test** (`e2e/*.spec.ts`, `npm run test:e2e`) — the automated, committed proof of UI behaviour, run by `testCmd`. Every UI change needs a spec; rules in `.claude/rules/ui-e2e.md`; set up with `/e2e-setup`.
 - **postgres / mongodb** — read-only on local/dev databases: check real schema before writing queries or migrations. Never point at production.
 - **github** — read issues/PR comments for requirements; do not merge, release or tag without the user asking.
 

@@ -1,0 +1,76 @@
+// REFERENCE (claude-smart /e2e-setup): taken from a working Next.js dashboard with a Go API and a JWT in
+// localStorage. Adapt names, env var, storage key, routes and texts to the target project.
+import { test as base, expect, type Page, type Route } from "@playwright/test";
+import { E2E_API_URL } from "../playwright.config";
+
+type Method = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+type MockResponse = { status?: number; body?: unknown };
+type MockHandler = MockResponse | ((route: Route) => MockResponse | Promise<MockResponse>);
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "*",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS",
+};
+
+async function fulfill(route: Route, { status = 200, body }: MockResponse) {
+  await route.fulfill({
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    body: status === 204 || body === undefined ? "" : JSON.stringify(body),
+  });
+}
+
+/**
+ * Giả lập backend cho 1 trang. Mỗi key là "METHOD /path" (path khớp chính xác, không tính query).
+ * Request nào không có trong danh sách → trả 599 và được ghi vào `unmocked` để test fail rõ ràng.
+ */
+export async function mockApi(page: Page, routes: Record<string, MockHandler>) {
+  const unmocked: string[] = [];
+  await page.route(`${E2E_API_URL}/**`, async (route) => {
+    const req = route.request();
+    if (req.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers: CORS_HEADERS });
+      return;
+    }
+    const key = `${req.method() as Method} ${new URL(req.url()).pathname}`;
+    const handler = routes[key];
+    if (!handler) {
+      unmocked.push(key);
+      await fulfill(route, { status: 599, body: { Error: `E2E: chưa mock ${key}` } });
+      return;
+    }
+    await fulfill(route, typeof handler === "function" ? await handler(route) : handler);
+  });
+  return { unmocked };
+}
+
+function base64url(value: object): string {
+  return Buffer.from(JSON.stringify(value)).toString("base64url");
+}
+
+/** JWT giả đủ để FE decode được claims (FE không verify chữ ký — đó là việc của BE). */
+export function fakeJwt(claims: { user_id: string; tenant_id: string; role: string }): string {
+  const exp = Math.floor(Date.now() / 1000) + 3600;
+  return `${base64url({ alg: "HS256", typ: "JWT" })}.${base64url({ ...claims, exp })}.signature`;
+}
+
+export const TEST_USER = { userId: "user-1", tenantId: "tenant-1", role: "ADMIN" as const };
+
+/** Đăng nhập sẵn bằng cách ghi thẳng localStorage "amp.auth" (giống writeStoredAuth) trước khi trang load. */
+export async function loginAs(page: Page, role: "ADMIN" | "EDITOR" | "VIEWER" = "ADMIN") {
+  const token = fakeJwt({ user_id: TEST_USER.userId, tenant_id: TEST_USER.tenantId, role });
+  const auth = { token, tenantId: TEST_USER.tenantId, role, userId: TEST_USER.userId };
+  await page.addInitScript((value) => window.localStorage.setItem("amp.auth", value), JSON.stringify(auth));
+}
+
+/** Thu lỗi JS chưa bắt được trên trang — test nào cũng nên kết thúc với danh sách rỗng. */
+export const test = base.extend<{ pageErrors: string[] }>({
+  pageErrors: async ({ page }, provide) => {
+    const errors: string[] = [];
+    page.on("pageerror", (err) => errors.push(err.message));
+    await provide(errors);
+  },
+});
+
+export { expect };
