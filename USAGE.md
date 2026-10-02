@@ -390,7 +390,9 @@ Dùng ↑ ↓ để di chuyển, **Space** để bỏ chọn (◼ thành ◻), x
 
 Các skill kiểu QA, retrospective: giữ hay bỏ đều được. Lỡ chọn hết cũng không sao: claude-smart vẫn dặn Claude không dùng `bmad-build`. Muốn chọn lại thì chạy lại `npx skills add bmad-code-org/BMAD-METHOD`.
 
-Sau đó, trong Claude, gõ `bmad setup` để cài phần runtime, và `bmad status` để kiểm tra.
+Sau đó, trong Claude, gõ `/bmad setup` để cài phần runtime, và `/bmad status` để kiểm tra.
+
+`/bmad setup` sẽ: kiểm tra cài đặt (cần `uv`), hỏi vài câu cấu hình có sẵn mặc định (tên dự án, thư mục tài liệu `_bmad-output`; có câu về ngôn ngữ thì chọn tiếng Việt), tạo `_bmad/`, rồi **đề nghị cài các skill còn thiếu**. Khi nó đề nghị `bmad-build`, `bmad-build-auto`, `bmad-agent-dev`, `bmad-code-review`, `bmad-review`… thì hãy **từ chối**: đó là những skill đã cố ý bỏ. Tương tự, sau `/bmad update`, kiểm tra lại `.claude/skills/` xem các skill đó có bị cài lại không.
 
 - BMAD tạo `_bmad/` (cấu hình và script) và ghi tài liệu vào `_bmad-output/` (PRD, kiến trúc, `tickets.toml` của các epic và ticket). Bản BMAD cũ (v4) dùng `docs/prd.md` và `docs/stories/`; claude-smart hiểu cả hai.
 - Tên lệnh của BMAD đều bắt đầu bằng `bmad…`, không trùng với lệnh của claude-smart.
@@ -399,20 +401,22 @@ Sau đó, trong Claude, gõ `bmad setup` để cài phần runtime, và `bmad st
 
 ### 13.2 Phân tích bằng BMAD, từng bước
 
-Ví dụ với tính năng "Kho ảnh của tenant trên Cloudflare R2". Gõ từng lệnh trong Claude; mỗi lệnh là một buổi hỏi đáp, BMAD hỏi và bạn trả lời.
+Ví dụ với tính năng "Kho ảnh của tenant trên Cloudflare R2". Gõ từng lệnh trong Claude, **có dấu `/` ở đầu và mô tả ngay sau tên lệnh trên cùng một dòng**, ví dụ `/bmad-forge-idea Kho ảnh tenant trên R2`. Mỗi lệnh là một buổi hỏi đáp: BMAD hỏi, bạn trả lời. Không nhớ lệnh nào thì gõ `/bmad <câu hỏi>` để BMAD gợi ý.
+
+> **`/spec` (claude-smart) khác `/bmad-spec` (BMAD).** `/spec` phỏng vấn bạn rồi viết `docs/ai/specs/<tên>.md` có AC-1, AC-2… để `/plan-task` dùng ngay; dùng cho **một tính năng**. `/bmad-spec` cô đọng ý tưởng hoặc ghi chú thành spec cho chuỗi BMAD (kiến trúc → ticket); dùng cho **việc lớn**. Không có lệnh `/spec-bmad`.
 
 | Bước | Lệnh BMAD | Làm gì | Kết quả |
 |---|---|---|---|
-| 1. Xin gợi ý | `bmad` | BMAD xem dự án và gợi ý nên bắt đầu từ đâu | Lộ trình gợi ý |
-| 2. Mở rộng ý tưởng *(tùy chọn)* | `bmad-brainstorming Kho ảnh tenant trên R2` | Sinh nhiều hướng tiếp cận từ nhiều góc nhìn | `brainstorm-<chủ-đề>.md` |
-| 3. Thử thách ý tưởng | `bmad-forge-idea` | Hỏi vặn liên tục: ai dùng, vì sao, rủi ro gì, cái gì nên bỏ. Kết quả là ý tưởng **được củng cố**, **bị loại**, hoặc **rõ ràng hơn** | `forge-<slug>.md` (quyết định và các phương án đã bỏ) |
-| 4. Nghiên cứu *(khi cần)* | `bmad-deep-recon` | Tìm hiểu kỹ thuật/thị trường để ra quyết định (ví dụ R2 so với S3, presigned URL) | Ghi chú nghiên cứu |
-| 5. Tóm tắt sản phẩm | `bmad-product-brief` | Bản tóm tắt 1–2 trang: vấn đề, người dùng, giá trị, phạm vi | `product-brief.md` |
-| 6. Yêu cầu chi tiết | `bmad-prd` (cả sản phẩm hoặc module lớn) hoặc `bmad-spec` (một tính năng lớn) | Yêu cầu chức năng, yêu cầu phi chức năng đo được, tiêu chí nghiệm thu | PRD / spec |
-| 7. Soi lỗ hổng *(nên làm)* | `bmad-advanced-elicitation` | Phản biện bằng pre-mortem, first principles, red team | PRD/spec chắc hơn |
-| 8. Thiết kế giao diện *(nếu có UI)* | `bmad-ux` | Thông tin kiến trúc, luồng, trạng thái, accessibility | `DESIGN.md`, `EXPERIENCE.md` |
-| 9. Kiến trúc | `bmad-architecture` | Quyết định kỹ thuật xuyên suốt, mỗi quyết định có ID để story trích dẫn | Tài liệu kiến trúc |
-| 10. Chia việc | `bmad-ticket` | Chia PRD/spec thành epic và ticket có tiêu chí nghiệm thu; hỏi được *"what's next?"*, *"show status"* | `tickets.toml` theo từng epic |
+| 1. Xin gợi ý | `/bmad` | BMAD xem dự án và gợi ý nên bắt đầu từ đâu | Lộ trình gợi ý |
+| 2. Mở rộng ý tưởng *(tùy chọn)* | `/bmad-brainstorming Kho ảnh tenant trên R2` | Sinh nhiều hướng tiếp cận từ nhiều góc nhìn | `brainstorm-<chủ-đề>.md` |
+| 3. Thử thách ý tưởng | `/bmad-forge-idea` | Hỏi vặn liên tục: ai dùng, vì sao, rủi ro gì, cái gì nên bỏ. Kết quả là ý tưởng **được củng cố**, **bị loại**, hoặc **rõ ràng hơn** | `forge-<slug>.md` (quyết định và các phương án đã bỏ) |
+| 4. Nghiên cứu *(khi cần)* | `/bmad-deep-recon` | Tìm hiểu kỹ thuật/thị trường để ra quyết định (ví dụ R2 so với S3, presigned URL) | Ghi chú nghiên cứu |
+| 5. Tóm tắt sản phẩm | `/bmad-product-brief` | Bản tóm tắt 1–2 trang: vấn đề, người dùng, giá trị, phạm vi | `product-brief.md` |
+| 6. Yêu cầu chi tiết | `/bmad-prd` (cả sản phẩm hoặc module lớn) hoặc `/bmad-spec` (một tính năng lớn) | Yêu cầu chức năng, yêu cầu phi chức năng đo được, tiêu chí nghiệm thu | PRD / spec |
+| 7. Soi lỗ hổng *(nên làm)* | `/bmad-advanced-elicitation` | Phản biện bằng pre-mortem, first principles, red team | PRD/spec chắc hơn |
+| 8. Thiết kế giao diện *(nếu có UI)* | `/bmad-ux` | Thông tin kiến trúc, luồng, trạng thái, accessibility | `DESIGN.md`, `EXPERIENCE.md` |
+| 9. Kiến trúc | `/bmad-architecture` | Quyết định kỹ thuật xuyên suốt, mỗi quyết định có ID để story trích dẫn | Tài liệu kiến trúc |
+| 10. Chia việc | `/bmad-ticket` | Chia PRD/spec thành epic và ticket có tiêu chí nghiệm thu; hỏi được *"what's next?"*, *"show status"* | `tickets.toml` theo từng epic |
 
 **Mẹo:**
 - Muốn nhiều "vai" (PM, kiến trúc sư, QA…) cùng thảo luận một vấn đề khó: `bmad-party-mode`.
