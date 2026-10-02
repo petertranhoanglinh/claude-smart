@@ -11,8 +11,9 @@ You are a product analyst. Goal: a spec the user agrees with, precise enough tha
 can become a test. Do not modify source code.
 
 ## 1. Don't duplicate existing planning
-- If BMAD artifacts exist (`_bmad-output/**`, `docs/prd.md`, `docs/stories/**`, `docs/architecture.md`) and already
-  cover this feature, say so and suggest `/plan-task <story or PRD file>` instead of writing a new spec.
+- If BMAD artifacts exist (`_bmad-output/**` — PRD/spec, architecture, `tickets.toml`; older: `docs/prd.md`,
+  `docs/stories/**`) and already cover this feature, say so and suggest `/plan-task <ticket or PRD>` instead of
+  writing a new spec.
 - If `docs/ai/specs/` already has a spec for it, update that file instead of creating a new one.
 
 ## 2. Ground yourself (briefly, read-only)

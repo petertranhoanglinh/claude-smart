@@ -84,8 +84,8 @@ safe(() => {
   }
   if (existsSync(path.join(dir, '_bmad')) || existsSync(path.join(dir, '.bmad-core'))) {
     notes.push(
-      'BMAD is installed: use it for planning only (PRD, architecture, stories in _bmad-output/ or docs/). ' +
-        'Implement a story with `/plan-task <story file>` → `/implement`, not with BMAD\'s dev agent.',
+      'BMAD is installed: use it for planning only (brief, PRD/spec, architecture, tickets in _bmad-output/). ' +
+        'Implement a ticket with `/plan-task <ticket>` → `/implement`, not with bmad-build / bmad-build-auto.',
     );
   }
   if (!cfg.testCmd) notes.push('No testCmd in .claude/smart.config.json: tests are not enforced until it is set (`/bootstrap` sets it).');

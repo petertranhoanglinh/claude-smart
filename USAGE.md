@@ -334,53 +334,86 @@ Hướng dẫn tôi từng bước tạo bucket R2 và API token theo Phase 0, k
 
 ## 13. Kết hợp với BMAD-Method
 
-[BMAD-Method](https://github.com/bmad-code-org/BMAD-METHOD) mạnh ở **khâu lên kế hoạch**: nhiều agent đóng vai Analyst, PM, Architect, Scrum Master viết PRD, kiến trúc và chia story. claude-smart mạnh ở **khâu code**: plan từng bước, hook ép test, an toàn. Dùng mỗi bên đúng phần của nó:
+[BMAD-Method](https://github.com/bmad-code-org/BMAD-METHOD) mạnh ở **khâu phân tích và lên kế hoạch**: brainstorm, thử thách ý tưởng, viết brief/PRD, thiết kế UX và kiến trúc, chia ticket. claude-smart mạnh ở **khâu code**: plan từng bước, hook ép test, an toàn. Dùng mỗi bên đúng phần của nó:
 
 ```
- BMAD (lên kế hoạch)                         claude-smart (thực thi)
-┌──────────────────────────────┐            ┌──────────────────────────────────────────┐
-│ brief → PRD → architecture   │  story.md  │ /plan-task <story> → /clear → /implement │
-│ → epics → stories            │ ─────────▶ │ (test + hook + commit) → /review-diff    │
-└──────────────────────────────┘            └──────────────────────────────────────────┘
+ BMAD (phân tích + lên kế hoạch)                       claude-smart (thực thi)
+┌──────────────────────────────────────────┐          ┌──────────────────────────────────────────┐
+│ brainstorming → forge-idea → product-brief│  ticket  │ /plan-task <ticket> → /clear → /implement│
+│ → prd/spec → ux → architecture → ticket   │ ───────▶ │ (test + hook + commit) → /review-diff    │
+└──────────────────────────────────────────┘          └──────────────────────────────────────────┘
 ```
+
+> BMAD thay đổi khá nhanh. Mục này viết theo tài liệu BMAD bản hiện hành (cài dạng *skills*). Khi không chắc tên lệnh, gõ **`bmad`**: đó là lệnh "trung tâm", tự kiểm tra trạng thái và gợi ý bước tiếp theo.
 
 ### 13.1 Cài BMAD vào dự án đã có claude-smart
 
+Cài **một trong hai** cách, chạy ở thư mục gốc dự án:
+
 ```powershell
 cd E:\code\my-app
-npx bmad-method install        # chọn IDE: Claude Code; cần Node 20+
+npx skills add bmad-code-org/BMAD-METHOD        # cài dạng skills (cần Node)
 ```
 
-- BMAD v6 tạo `_bmad/` (agent, workflow) và ghi tài liệu vào `_bmad-output/`. Thư mục này đổi được khi cài; bản v4 cũ dùng `docs/prd.md`, `docs/stories/`.
-- Các lệnh của BMAD có tiền tố riêng (ví dụ `/bmad-help`), không trùng lệnh của claude-smart.
+```
+/plugin marketplace add bmad-code-org/bmad-plugins     # hoặc: cài dạng plugin, gõ trong Claude Code
+```
+
+Sau đó, trong Claude, gõ `bmad setup` để cài phần runtime, và `bmad status` để kiểm tra.
+
+- BMAD tạo `_bmad/` (cấu hình và script) và ghi tài liệu vào `_bmad-output/` (PRD, kiến trúc, `tickets.toml` của các epic và ticket). Bản BMAD cũ (v4) dùng `docs/prd.md` và `docs/stories/`; claude-smart hiểu cả hai.
+- Tên lệnh của BMAD đều bắt đầu bằng `bmad…`, không trùng với lệnh của claude-smart.
 - Chạy lại installer claude-smart để nó nhận ra BMAD: `node E:\start-up\claude-smart\install.mjs .`. Output sẽ có dòng `BMAD: detected`.
+- BMAD có `bmad-project-context` để tự tìm hiểu codebase đang có. Nếu đã chạy `/bootstrap` thì đây là bước **tùy chọn**. Chạy thêm cũng được, để các skill BMAD hiểu dự án sâu hơn.
 
-### 13.2 Quy trình
+### 13.2 Phân tích bằng BMAD, từng bước
 
-1. **Lên kế hoạch bằng BMAD:** dùng các agent Analyst/PM/Architect/Scrum Master để có PRD, tài liệu kiến trúc và các file story. Gõ `/bmad-help` để xem bước tiếp theo BMAD gợi ý.
-   - Trong lúc này hook claude-smart **không chặn**: thay đổi chỉ ở file `.md`, `_bmad/` hay `_bmad-output/` được coi là tài liệu, không bắt chạy test.
-2. **Code từng story bằng claude-smart:**
-   ```
-   /plan-task _bmad-output/<đường-dẫn>/story-1.2.md
-   /clear
-   /implement            (lặp lại tới hết plan)
-   /review-diff main...HEAD
-   ```
-   Plan đọc tiêu chí nghiệm thu trong story và lập bảng phủ AC. Khi xong, story được đổi `Status` thành `Done` (chỉ sửa đúng dòng đó).
-3. Sang story tiếp theo: `/clear` rồi lặp lại bước 2.
+Ví dụ với tính năng "Kho ảnh của tenant trên Cloudflare R2". Gõ từng lệnh trong Claude; mỗi lệnh là một buổi hỏi đáp, BMAD hỏi và bạn trả lời.
 
-### 13.3 Luật để hai bên không đụng nhau
+| Bước | Lệnh BMAD | Làm gì | Kết quả |
+|---|---|---|---|
+| 1. Xin gợi ý | `bmad` | BMAD xem dự án và gợi ý nên bắt đầu từ đâu | Lộ trình gợi ý |
+| 2. Mở rộng ý tưởng *(tùy chọn)* | `bmad-brainstorming Kho ảnh tenant trên R2` | Sinh nhiều hướng tiếp cận từ nhiều góc nhìn | `brainstorm-<chủ-đề>.md` |
+| 3. Thử thách ý tưởng | `bmad-forge-idea` | Hỏi vặn liên tục: ai dùng, vì sao, rủi ro gì, cái gì nên bỏ. Kết quả là ý tưởng **được củng cố**, **bị loại**, hoặc **rõ ràng hơn** | `forge-<slug>.md` (quyết định và các phương án đã bỏ) |
+| 4. Nghiên cứu *(khi cần)* | `bmad-deep-recon` | Tìm hiểu kỹ thuật/thị trường để ra quyết định (ví dụ R2 so với S3, presigned URL) | Ghi chú nghiên cứu |
+| 5. Tóm tắt sản phẩm | `bmad-product-brief` | Bản tóm tắt 1–2 trang: vấn đề, người dùng, giá trị, phạm vi | `product-brief.md` |
+| 6. Yêu cầu chi tiết | `bmad-prd` (cả sản phẩm hoặc module lớn) hoặc `bmad-spec` (một tính năng lớn) | Yêu cầu chức năng, yêu cầu phi chức năng đo được, tiêu chí nghiệm thu | PRD / spec |
+| 7. Soi lỗ hổng *(nên làm)* | `bmad-advanced-elicitation` | Phản biện bằng pre-mortem, first principles, red team | PRD/spec chắc hơn |
+| 8. Thiết kế giao diện *(nếu có UI)* | `bmad-ux` | Thông tin kiến trúc, luồng, trạng thái, accessibility | `DESIGN.md`, `EXPERIENCE.md` |
+| 9. Kiến trúc | `bmad-architecture` | Quyết định kỹ thuật xuyên suốt, mỗi quyết định có ID để story trích dẫn | Tài liệu kiến trúc |
+| 10. Chia việc | `bmad-ticket` | Chia PRD/spec thành epic và ticket có tiêu chí nghiệm thu; hỏi được *"what's next?"*, *"show status"* | `tickets.toml` theo từng epic |
+
+**Mẹo:**
+- Muốn nhiều "vai" (PM, kiến trúc sư, QA…) cùng thảo luận một vấn đề khó: `bmad-party-mode`.
+- Dự án có sẵn kiến trúc và checklist (như `auto-manage-post`): có thể bỏ bước 2–5, đi thẳng `bmad-spec` → `bmad-architecture` (cập nhật) → `bmad-ticket`.
+- Lúc phân tích, hook claude-smart **không chặn**. Thay đổi chỉ ở `.md`, `_bmad/` hay `_bmad-output/` được coi là tài liệu, không bắt chạy test.
+- Đã bật `language=Vietnamese` cho claude-smart thì nên dặn BMAD luôn: *"Trả lời và viết tài liệu bằng tiếng Việt"*, hoặc chọn ngôn ngữ trong cấu hình của BMAD.
+
+### 13.3 Chuyển sang code bằng claude-smart
+
+```
+/plan-task epic media-library, ticket 1 trong _bmad-output/…/tickets.toml
+/clear
+/implement            (lặp lại tới hết plan)
+/review-diff main...HEAD
+```
+
+- `/plan-task` đọc ticket, cùng PRD/spec và kiến trúc mà ticket trích dẫn, rồi lập bảng phủ AC: mỗi tiêu chí nghiệm thu phải có bước và test tương ứng.
+- Khi plan xong, `/implement` nhờ `bmad-ticket` đánh dấu ticket hoàn thành; claude-smart không tự sửa `tickets.toml`.
+- Ticket tiếp theo: `/clear`, hỏi `bmad-ticket` *"what's next?"*, rồi lặp lại.
+
+### 13.4 Luật để hai bên không đụng nhau
 
 | Làm | Không làm |
 |---|---|
-| Dùng agent BMAD để **viết tài liệu**: PRD, kiến trúc, story | Dùng agent **dev** của BMAD để code (nó sẽ bỏ qua plan và quy trình từng bước của claude-smart) |
-| `/plan-task <file story>` cho từng story | Đưa cả PRD vào một `/plan-task` |
+| Dùng BMAD để **phân tích và viết tài liệu**: brief, PRD/spec, UX, kiến trúc, ticket | Dùng **`bmad-build` / `bmad-build-auto`** để code (bỏ qua plan và quy trình từng bước của claude-smart) |
+| `/plan-task <ticket>` cho từng ticket | Đưa cả PRD vào một `/plan-task` |
 | Để `docs/ai/architecture.md` **link tới** tài liệu kiến trúc của BMAD | Chép lại nội dung kiến trúc vào hai nơi |
 | Dùng `/spec` cho tính năng lẻ nhỏ hơn một epic | Dùng cả BMAD lẫn `/spec` cho cùng một tính năng |
 
 Hook claude-smart (chặn `.env`, test trước commit, Playwright cho UI…) **luôn chạy**, kể cả khi bạn dùng lệnh của BMAD.
 
-### 13.4 Chọn `/spec` hay BMAD?
+### 13.5 Chọn `/spec` hay BMAD?
 
 | Tình huống | Chọn |
 |---|---|

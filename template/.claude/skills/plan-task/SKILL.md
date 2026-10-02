@@ -1,7 +1,7 @@
 ---
 name: plan-task
 description: Create a step-by-step implementation plan file for a task in docs/ai/plans/ — explore first, write the plan, change no source code. Accepts a task description, a spec (docs/ai/specs/*.md) or a BMAD story/PRD file. Use before any non-trivial feature, refactor or bug fix.
-argument-hint: "<task description | spec file | BMAD story file>"
+argument-hint: "<task description | spec file | BMAD ticket>"
 ---
 
 Task: **$ARGUMENTS**
@@ -9,10 +9,12 @@ Task: **$ARGUMENTS**
 You are planning only. Do not modify source code in this turn.
 
 1. **Find the source of truth.**
-   - If the argument is a file (a spec in `docs/ai/specs/`, a BMAD story/PRD/epic under `_bmad-output/`, `docs/stories/`,
-     `docs/prd.md`), read it fully — it defines *what* to build; the plan defines *how*.
-   - Otherwise look for a matching spec in `docs/ai/specs/` or BMAD story; use it if it clearly matches.
-   - A spec with `Status: draft` or a BMAD story not yet approved: ask the user whether to proceed or finish it first.
+   - If the argument is a file or a BMAD ticket reference (a spec in `docs/ai/specs/`; BMAD artifacts under
+     `_bmad-output/` — PRD, spec, architecture, an epic's `tickets.toml` entry such as "epic media, ticket 3", a
+     `backlog/` story; older BMAD: `docs/prd.md`, `docs/stories/*.md`), read it fully together with the PRD/spec and
+     architecture it cites — it defines *what* to build; the plan defines *how*.
+   - Otherwise look for a matching spec in `docs/ai/specs/` or BMAD ticket/story; use it if it clearly matches.
+   - A spec with `Status: draft`, or a BMAD ticket/story that is not ready: ask the user whether to proceed or finish it first.
    - No spec and the task is a new, user-facing or ambiguous feature: suggest `/spec` first (the user may decline).
    - Otherwise, if the task is ambiguous in a way that changes the design, ask the user (max 3 questions).
 2. Explore with `explorer` subagents (parallel, one per angle). Read `docs/ai/architecture.md` and any matching `.claude/rules/` first.
