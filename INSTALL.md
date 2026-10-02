@@ -65,7 +65,15 @@ Kết quả mẫu:
   ...
 ```
 
-> Trong các ví dụ bên dưới, `CS` là đường dẫn tới thư mục claude-smart. Ví dụ: `~/tools/claude-smart` hoặc `E:\tools\claude-smart`.
+> **Quy ước trong các ví dụ bên dưới:**
+> - `CS` = đường dẫn tới thư mục claude-smart. **Thay bằng đường dẫn thật** trên máy bạn, ví dụ `~/tools/claude-smart` hoặc `E:\tools\claude-smart`.
+> - `.` = thư mục hiện tại. Các lệnh `node CS/install.mjs .` phải được chạy **khi đang đứng trong thư mục dự án** (dùng `cd` vào đó trước). Muốn chạy từ chỗ khác thì thay `.` bằng đường dẫn dự án.
+>
+> Ví dụ cụ thể trên Windows:
+> ```powershell
+> cd E:\code\my-app
+> node E:\tools\claude-smart\install.mjs .
+> ```
 
 ## 3. Cài vào dự án mới
 
