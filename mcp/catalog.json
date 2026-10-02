@@ -1,0 +1,49 @@
+{
+  "playwright": {
+    "about": "Headless browser: open the app, click through it, take screenshots to check UI/layout.",
+    "needs": "Node",
+    "config": { "command": "npx", "args": ["-y", "@playwright/mcp@latest"] }
+  },
+  "context7": {
+    "about": "Up-to-date library/framework documentation on demand (stops hallucinated APIs).",
+    "needs": "Node",
+    "config": { "command": "npx", "args": ["-y", "@upstash/context7-mcp@latest"] }
+  },
+  "serena": {
+    "about": "Symbol-level code navigation via language servers (find symbol, references, overview) — semantic code search without a vector DB.",
+    "needs": "uv (uvx)",
+    "config": { "command": "uvx", "args": ["--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server", "--project", "."] }
+  },
+  "github": {
+    "about": "Issues, PRs, reviews, releases from inside Claude Code.",
+    "needs": "env GITHUB_PERSONAL_ACCESS_TOKEN",
+    "config": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": { "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}" }
+    }
+  },
+  "postgres": {
+    "about": "Inspect schema and query a LOCAL/DEV PostgreSQL in restricted (read-only) mode.",
+    "needs": "uv (uvx), env DATABASE_URI",
+    "config": { "command": "uvx", "args": ["postgres-mcp", "--access-mode=restricted"], "env": { "DATABASE_URI": "${DATABASE_URI}" } }
+  },
+  "mongodb": {
+    "about": "Inspect collections and query a LOCAL/DEV MongoDB, read-only.",
+    "needs": "Node, env MDB_MCP_CONNECTION_STRING",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mongodb-mcp-server", "--readOnly"],
+      "env": { "MDB_MCP_CONNECTION_STRING": "${MDB_MCP_CONNECTION_STRING}" }
+    }
+  },
+  "claude-context": {
+    "about": "Vector (embedding) semantic search over the whole codebase. For very large repos. Needs an embedding API key and a Milvus/Zilliz instance — check the package README for current env names.",
+    "needs": "Node, env OPENAI_API_KEY, MILVUS_ADDRESS, MILVUS_TOKEN",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@zilliz/claude-context-mcp@latest"],
+      "env": { "OPENAI_API_KEY": "${OPENAI_API_KEY}", "MILVUS_ADDRESS": "${MILVUS_ADDRESS}", "MILVUS_TOKEN": "${MILVUS_TOKEN}" }
+    }
+  }
+}

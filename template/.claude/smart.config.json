@@ -1,0 +1,13 @@
+{
+  "strict": true,
+  "testCmd": "",
+  "lintCmd": "",
+  "formatCmd": "",
+  "testTimeoutSec": 600,
+  "testBeforeCommit": true,
+  "verifyOnStop": true,
+  "maxStopRetries": 3,
+  "requireProgressUpdate": true,
+  "fileGlobs": [],
+  "protectedPaths": [".claude/settings.json", ".claude/hooks/**", ".claude/smart.config.json"]
+}
