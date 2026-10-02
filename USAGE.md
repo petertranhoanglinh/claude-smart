@@ -359,6 +359,24 @@ npx skills add bmad-code-org/BMAD-METHOD        # cài dạng skills (cần Node
 /plugin marketplace add bmad-code-org/bmad-plugins     # hoặc: cài dạng plugin, gõ trong Claude Code
 ```
 
+**Chọn skill khi cài (quan trọng).** Lệnh `npx skills add` hiện danh sách skill và **chọn sẵn tất cả** (◼). Đừng giữ hết, vì 2 lý do:
+1. Mỗi skill đã cài tốn một ít token ở **mọi phiên** (Claude luôn đọc phần mô tả của nó).
+2. Claude có thể **tự gọi** các skill code của BMAD, bỏ qua `/plan-task` và `/implement` của claude-smart.
+
+Dùng ↑ ↓ để di chuyển, **Space** để bỏ chọn (◼ thành ◻), xong nhấn **Enter**.
+
+| Giữ ◼ (phân tích, lên kế hoạch) | Bỏ ◻ (phần code, claude-smart đã lo) |
+|---|---|
+| `bmad`: lệnh trung tâm, gợi ý bước tiếp theo (**bắt buộc**) | `bmad-agent-dev`: agent viết code, trùng `/implement` |
+| `bmad-agent-analyst`, `bmad-agent-pm`, `bmad-agent-architect`, `bmad-agent-ux…`: các "vai" phân tích | `bmad-build`, `bmad-build-auto`: tự code theo ticket, bỏ qua plan từng bước |
+| `bmad-advanced-elicitation`, `bmad-forge-idea`, `bmad-brainstorming`, `bmad-deep-recon`: phản biện, mở rộng, nghiên cứu ý tưởng | Mọi skill có chữ **dev**, **build**, **implement**, **code-review**: trùng `/implement`, `/review-diff` |
+| `bmad-product-brief`, `bmad-prd`, `bmad-spec`, `bmad-prfaq`: viết yêu cầu | |
+| `bmad-ux`, `bmad-architecture`: tài liệu UX, kiến trúc | |
+| `bmad-ticket`: chia epic/ticket (**cần**, vì claude-smart nhờ nó đánh dấu ticket xong) | |
+| `bmad-party-mode`, `bmad-project-context`: tùy chọn | |
+
+Các skill kiểu QA, retrospective: giữ hay bỏ đều được. Lỡ chọn hết cũng không sao: claude-smart vẫn dặn Claude không dùng `bmad-build`. Muốn chọn lại thì chạy lại `npx skills add bmad-code-org/BMAD-METHOD`.
+
 Sau đó, trong Claude, gõ `bmad setup` để cài phần runtime, và `bmad status` để kiểm tra.
 
 - BMAD tạo `_bmad/` (cấu hình và script) và ghi tài liệu vào `_bmad-output/` (PRD, kiến trúc, `tickets.toml` của các epic và ticket). Bản BMAD cũ (v4) dùng `docs/prd.md` và `docs/stories/`; claude-smart hiểu cả hai.
