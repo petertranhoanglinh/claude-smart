@@ -78,6 +78,21 @@ test('dry run writes nothing', () => {
   assert.ok(!existsSync(path.join(dir, 'CLAUDE.md')));
 });
 
+test('mergeSettings migrates old installs: drops legacy .env denies, updates our matchers', () => {
+  const tpl = JSON.parse(readFileSync(new URL('../template/.claude/settings.json', import.meta.url), 'utf8'));
+  const cmd = tpl.hooks.PreToolUse[0].hooks[0].command;
+  const old = {
+    permissions: { deny: ['Read(./.env)', 'Read(./**/.env)', 'Bash(rm -rf /)'] },
+    hooks: { PreToolUse: [{ matcher: 'Edit|Write|MultiEdit|NotebookEdit', hooks: [{ type: 'command', command: cmd }] }] },
+  };
+  const merged = mergeSettings(old, tpl);
+  assert.ok(!merged.permissions.deny.includes('Read(./.env)'));
+  assert.ok(merged.permissions.deny.includes('Bash(rm -rf /)'));
+  const group = merged.hooks.PreToolUse.find((g) => g.hooks[0].command === cmd);
+  assert.match(group.matcher, /^Read\|/);
+  assert.equal(merged.hooks.PreToolUse.filter((g) => g.hooks[0].command === cmd).length, 1);
+});
+
 test('mergeSettings does not duplicate hooks', () => {
   const tpl = JSON.parse(readFileSync(new URL('../template/.claude/settings.json', import.meta.url), 'utf8'));
   const once = mergeSettings({}, tpl);

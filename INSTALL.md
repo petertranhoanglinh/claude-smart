@@ -210,6 +210,7 @@ node .claude/hooks/configure.mjs strict=false          # tắt toàn bộ chặn
 | `verifyOnStop` | `true` | Chạy test khi Claude định kết thúc lượt |
 | `maxStopRetries` | `3` | Số lần tối đa Stop hook bắt Claude làm tiếp |
 | `requireProgressUpdate` | `true` | Có sửa code thì phải cập nhật `PROGRESS.md` |
+| `envAccess` | `keys` | Quyền với `.env`: `block` (cấm hẳn) · `keys` (chỉ xem tên biến, thêm biến mới qua `env.mjs`) · `full` (đọc/sửa tự do, chỉ nên dùng khi `.env` toàn giá trị dev) |
 | `language` | `""` | Ngôn ngữ cho mọi thứ bạn đọc: plan, PROGRESS, ADR, review, câu trả lời. Đặt nhanh: `node CS/install.mjs . --lang=vi`. Code và commit message giữ nguyên |
 | `protectedPaths` | hooks + settings | Thêm glob để bảo vệ, ví dụ `"migrations/**"` |
 

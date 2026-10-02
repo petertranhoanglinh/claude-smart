@@ -239,7 +239,7 @@ Thông báo của hook luôn bắt đầu bằng `claude-smart:`. Claude đọc 
 
 | Thông báo | Nghĩa | Bạn làm gì |
 |---|---|---|
-| `editing ".env" is blocked (secrets file)` | Claude định sửa file bí mật | Tự sửa tay theo hướng dẫn Claude đưa ra |
+| `reading/editing ".env" is blocked (secrets file)` | Claude định đọc/sửa giá trị bí mật | Bình thường: Claude chuyển sang `env.mjs list` để xem tên biến và `env.mjs set` để thêm biến (bạn duyệt). Giá trị bí mật thì bạn tự điền. Thấy vướng quá với `.env` dev local: `configure.mjs envAccess=full` |
 | `editing "package-lock.json" is blocked (lockfile)` | Claude định sửa lockfile bằng tay | Bình thường: Claude sẽ dùng `npm install` thay vì sửa tay |
 | `editing ".claude/smart.config.json" is blocked` | Claude định nới luật | Nếu thật sự cần đổi, Claude sẽ xin chạy `configure.mjs` và bạn duyệt |
 | `command blocked (force push / reset --hard …)` | Lệnh nguy hiểm | Nếu bạn thật sự muốn, tự chạy trong terminal |
@@ -309,6 +309,9 @@ Không. Bạn hỏi và sửa như trước. Khác biệt duy nhất là hook ki
 
 **Claude trả lời bằng tiếng Anh?**
 Kiểm tra `language` trong `.claude/smart.config.json` (`node .claude/hooks/configure.mjs` để xem). Đặt bằng `node .claude/hooks/configure.mjs language=Vietnamese`, rồi `/clear`.
+
+**Claude cần biến môi trường mới (ví dụ `R2_BUCKET`)?**
+Claude sẽ chạy `node .claude/hooks/env.mjs set R2_BUCKET --file backend/.env` (hiện hộp thoại để bạn duyệt), thêm luôn vào `.env.example`, rồi nhắc bạn điền giá trị. Muốn Claude đọc/sửa `.env` thoải mái (khi chỉ là giá trị dev): `node .claude/hooks/configure.mjs envAccess=full`.
 
 **Plan cũ còn tiếng Anh?**
 *"Dịch docs/ai/plans/<file>.md sang tiếng Việt, giữ nguyên checkbox, đường dẫn, tên hàm."*

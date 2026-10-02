@@ -10,5 +10,6 @@
   "requireProgressUpdate": true,
   "fileGlobs": [],
   "language": "",
+  "envAccess": "keys",
   "protectedPaths": [".claude/settings.json", ".claude/hooks/**", ".claude/smart.config.json"]
 }

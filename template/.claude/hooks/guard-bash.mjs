@@ -1,5 +1,5 @@
 // PreToolUse(Bash|PowerShell): block destructive commands; run the test suite before any `git commit`.
-import { readInput, projectDir, loadConfig, run, tail, block, safe } from './lib.mjs';
+import { readInput, projectDir, loadConfig, run, tail, block, safe, isEnvFile, ENV_HELP } from './lib.mjs';
 
 const DANGEROUS = [
   { re: /\brm\s+(-\w*\s+)*-\w*[rR]\w*\s+(-\w+\s+)*(\/|~|\$HOME|\*|\.)(\/?\*?)?(\s|;|&|\||$)/, why: 'recursive delete of root/home/cwd' },
@@ -12,8 +12,19 @@ const DANGEROUS = [
   { re: /--no-verify\b/, why: '--no-verify skips the project\'s git hooks' },
   { re: /\b(curl|wget|iwr|Invoke-WebRequest)\b[^|]*\|\s*(ba|z)?sh\b|\biex\b.*\b(iwr|Invoke-WebRequest)\b/i, why: 'piping a download into a shell' },
   { re: /\b(mkfs|dd\s+if=|format\s+[a-z]:)/i, why: 'disk-level destructive command' },
-  { re: /(>|\btee\b|\bcp\b|\bmv\b|Set-Content|Out-File)\s*\S*\.env(\s|$|\.(?!example|sample|template))/i, why: 'writing to a secrets file' },
 ];
+
+// Commands that print, copy or write file contents. Only these are checked against .env paths, so things like
+// `docker compose --env-file .env up` or `ls -a` still work.
+const FILE_VERBS =
+  /(^|[\s;&|(])(cat|type|more|less|head|tail|bat|nl|strings|grep|egrep|rg|findstr|sed|awk|cut|xxd|od|base64|source|Get-Content|gc|Select-String|sls|cp|mv|copy|move|tee|Set-Content|Add-Content|Out-File|echo|printf|code|vi|vim|nano|notepad)(?=$|[\s;&|)])|>>?|<|^\s*\.\s/i;
+
+function envFilesIn(cmd) {
+  return [...cmd.matchAll(/(?:^|[\s"'=/\\])(\.env(?:\.[\w.-]+)?)(?=$|[\s"';|&)<>])/g)].map((m) => m[1]).filter((f) => isEnvFile(f));
+}
+
+// The env helper on its own (optionally after `cd <dir> &&`), never chained with anything else.
+const ENV_HELPER = /^\s*(cd\s+("[^"]*"|\S+)\s*&&\s*)?node\s+["']?(\.\/)?\.claude[\\/]hooks[\\/]env\.mjs["']?(\s[^;&|<>`$]*)?$/;
 
 const COMMIT = /\bgit\s+(-\S+\s+(\S+\s+)?)*commit\b/;
 
@@ -28,9 +39,21 @@ safe(() => {
     }
   }
 
-  if (!COMMIT.test(cmd)) return;
   const dir = projectDir(input);
   const cfg = loadConfig(dir);
+
+  if (cfg.envAccess !== 'full' && !ENV_HELPER.test(cmd) && FILE_VERBS.test(cmd)) {
+    const files = envFilesIn(cmd);
+    if (files.length) {
+      block(
+        `claude-smart: command blocked (reads or writes secrets file ${files.join(', ')}).\n` +
+          (cfg.envAccess === 'block' ? '' : `${ENV_HELP}\n`) +
+          'Do not try to work around this.',
+      );
+    }
+  }
+
+  if (!COMMIT.test(cmd)) return;
   if (!cfg.strict || !cfg.testBeforeCommit || !cfg.testCmd) return;
 
   const res = run(cfg.testCmd, dir, cfg.testTimeoutSec);

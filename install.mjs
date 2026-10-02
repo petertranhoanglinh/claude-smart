@@ -69,19 +69,26 @@ function createPlan(dryRun, base) {
 }
 
 // ---------- merging ----------
+// Entries older claude-smart versions added that are now handled by hooks (envAccess) — removed on update.
+const LEGACY_DENY = ['Read(./.env)', 'Read(./.env.*)', 'Read(./**/.env)'];
+
 export function mergeSettings(existing, incoming) {
   const out = structuredClone(existing);
   out.permissions ??= {};
   for (const kind of ['allow', 'ask', 'deny']) {
-    const merged = [...(out.permissions[kind] || []), ...(incoming.permissions?.[kind] || [])];
+    let merged = [...(out.permissions[kind] || []), ...(incoming.permissions?.[kind] || [])];
+    if (kind === 'deny') merged = merged.filter((e) => !LEGACY_DENY.includes(e));
     if (merged.length) out.permissions[kind] = [...new Set(merged)];
+    else delete out.permissions[kind];
   }
   out.hooks ??= {};
   for (const [event, groups] of Object.entries(incoming.hooks || {})) {
     out.hooks[event] ??= [];
-    const known = new Set(out.hooks[event].flatMap((g) => (g.hooks || []).map((h) => h.command)));
     for (const group of groups) {
-      if (!group.hooks.every((h) => known.has(h.command))) out.hooks[event].push(group);
+      const mine = group.hooks.map((h) => h.command);
+      const current = out.hooks[event].find((g) => (g.hooks || []).some((h) => mine.includes(h.command)));
+      if (!current) out.hooks[event].push(group);
+      else if (group.matcher !== undefined && current.matcher !== group.matcher) current.matcher = group.matcher; // our hook, newer matcher
     }
   }
   if (!out.$schema && incoming.$schema) out.$schema = incoming.$schema;

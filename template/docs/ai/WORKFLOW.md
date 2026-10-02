@@ -19,7 +19,7 @@ These rules apply to every task in this repo. They exist to keep context small a
 - Do not start coding a non-trivial change without a plan file.
 - Touch only files the plan names; if another file must change, update the plan first.
 - Tests must pass before commit (enforced by hooks). Never weaken or delete a test to make it pass — fix the code, or ask.
-- Never edit secrets (`.env*`), lockfiles by hand, or `.git/` (enforced by hooks).
+- Secrets: by default (`envAccess: keys`) you cannot read or edit `.env` values. See variable names with `node .claude/hooks/env.mjs list`, add a missing one with `node .claude/hooks/env.mjs set KEY [value] [--file path]`, and keep `.env.example` in sync. Never edit lockfiles by hand or `.git/` (enforced by hooks).
 - Use subagents for: wide searches (`explorer`), running noisy test suites (`test-runner`), reviewing diffs (`reviewer`).
 - When context is getting long, run `/checkpoint` and ask the user to `/clear`.
 - If unsure about intent, ask. If unsure about code, read it — do not guess file names or APIs.

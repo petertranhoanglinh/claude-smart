@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { project, runHook, write, PASS, FAIL } from './helpers.mjs';
 import { globToRegExp } from '../template/.claude/hooks/lib.mjs';
 
@@ -55,6 +56,58 @@ test('guard-bash blocks destructive commands', () => {
   for (const c of ['rm -rf node_modules', 'rm -rf ./dist', 'git push --force-with-lease', 'git status', 'git reset --soft HEAD~1', 'cat .env.example', 'npm test']) {
     assert.equal(bash(c).code, 0, `should allow: ${c}`);
   }
+});
+
+test('envAccess=keys: .env reads blocked with helper hint; lockfiles readable', () => {
+  const dir = project();
+  const read = (f) => runHook('protect-files.mjs', dir, { tool_name: 'Read', tool_input: { file_path: path.join(dir, f) } });
+  const r = read('backend/.env');
+  assert.equal(r.code, 2);
+  assert.match(r.stderr, /env\.mjs list/);
+  assert.equal(read('.env.example').code, 0);
+  assert.equal(read('package-lock.json').code, 0);
+  assert.equal(read('certs/server.key').code, 2);
+});
+
+test('envAccess=full allows reading and editing .env', () => {
+  const dir = project({ envAccess: 'full' });
+  for (const tool_name of ['Read', 'Edit']) {
+    assert.equal(runHook('protect-files.mjs', dir, { tool_name, tool_input: { file_path: path.join(dir, '.env') } }).code, 0, tool_name);
+  }
+  assert.equal(runHook('guard-bash.mjs', dir, { tool_input: { command: 'cat .env' } }).code, 0);
+});
+
+test('guard-bash: shell access to .env follows envAccess', () => {
+  const dir = project();
+  const bash = (command) => runHook('guard-bash.mjs', dir, { tool_name: 'Bash', tool_input: { command } });
+  for (const c of ['cat .env', 'cat backend/.env.local', 'Get-Content .env', 'grep KEY .env', 'echo X=1 >> .env', 'node .claude/hooks/env.mjs list && cat .env']) {
+    assert.equal(bash(c).code, 2, `should block: ${c}`);
+  }
+  for (const c of ['node .claude/hooks/env.mjs list', 'cd "E:/my app" && node .claude/hooks/env.mjs set FOO bar --file backend/.env', 'docker compose --env-file .env up -d', 'cat .env.example', 'ls -a']) {
+    assert.equal(bash(c).code, 0, `should allow: ${c}`);
+  }
+  const blocked = project({ envAccess: 'block' });
+  assert.doesNotMatch(runHook('guard-bash.mjs', blocked, { tool_input: { command: 'cat .env' } }).stderr, /env\.mjs/);
+});
+
+test('env.mjs lists names without values and only appends new keys', () => {
+  const dir = project();
+  write(dir, 'backend/.env', 'DB_PASSWORD=supersecret\nEMPTY=\n');
+  write(dir, '.env.example', 'DB_PASSWORD=\n');
+  const env = (...args) =>
+    spawnSync(process.execPath, [path.join(dir, '.claude/hooks/env.mjs'), ...args], { encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: dir } });
+
+  const list = env('list');
+  assert.equal(list.status, 0);
+  assert.match(list.stdout, /DB_PASSWORD {3}\(set\)/);
+  assert.match(list.stdout, /EMPTY {3}\(empty\)/);
+  assert.doesNotMatch(list.stdout, /supersecret/);
+
+  assert.equal(env('set', 'R2_BUCKET', 'amp-media', '--file', 'backend/.env').status, 0);
+  assert.match(readFileSync(path.join(dir, 'backend/.env'), 'utf8'), /\nR2_BUCKET=amp-media\n$/);
+  assert.equal(env('set', 'DB_PASSWORD', 'x', '--file', 'backend/.env').status, 1, 'never overwrites');
+  assert.match(readFileSync(path.join(dir, 'backend/.env'), 'utf8'), /DB_PASSWORD=supersecret/);
+  assert.equal(env('set', 'X', '1', '--file', 'src/config.ts').status, 1, 'only .env files');
 });
 
 test('guard-bash runs tests before git commit', () => {

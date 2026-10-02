@@ -26,6 +26,10 @@ for (const arg of args) {
     console.error(`Unknown key "${key}". Known: ${Object.keys(DEFAULT_CONFIG).join(', ')}`);
     process.exit(1);
   }
+  if (key === 'envAccess' && !['block', 'keys', 'full'].includes(raw)) {
+    console.error('envAccess must be one of: block, keys, full');
+    process.exit(1);
+  }
   const type = typeof DEFAULT_CONFIG[key];
   cfg[key] = Array.isArray(DEFAULT_CONFIG[key])
     ? JSON.parse(raw)

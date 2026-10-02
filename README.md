@@ -140,7 +140,7 @@ Nên **commit** toàn bộ các file này để cả team (và Claude ở máy k
 | Hook | Khi nào | Làm gì |
 |---|---|---|
 | `session-start.mjs` | mở phiên, `/clear`, `/compact`, resume | Nạp `PROGRESS.md`, các bước chưa xong của plan đang làm, git branch/status/5 commit gần nhất, nhắc chạy `/bootstrap` nếu chưa có bản đồ |
-| `protect-files.mjs` | trước Edit/Write | Chặn sửa `.env*` (trừ `.env.example`), lockfile, `.git/`, file khóa/chứng chỉ, và `protectedPaths` (mặc định gồm chính hooks + settings để Claude không tự "nới luật") |
+| `protect-files.mjs` | trước Read/Edit/Write | `.env*` theo `envAccess` (mặc định: không đọc/sửa giá trị, chỉ xem tên biến và thêm biến qua `env.mjs`), chặn sửa lockfile, `.git/`, file khóa/chứng chỉ, và `protectedPaths` (mặc định gồm chính hooks + settings để Claude không tự "nới luật") |
 | `guard-bash.mjs` | trước Bash/PowerShell | Chặn `rm -rf /`, `git push --force`, `reset --hard`, `clean -f`, `--no-verify`, `curl \| bash`, ghi vào `.env`…; **trước `git commit` chạy `testCmd`, fail → không cho commit** |
 | `post-edit.mjs` | sau Edit/Write | Chạy `formatCmd` rồi `lintCmd` trên đúng file vừa sửa; lint lỗi → báo lại để Claude tự sửa ngay |
 | `stop-verify.mjs` | khi Claude định kết thúc lượt | Nếu có thay đổi code chưa commit: test phải xanh **và** `PROGRESS.md` phải được cập nhật, nếu không Claude buộc phải làm tiếp (tối đa `maxStopRetries` lần để không lặp vô hạn) |
@@ -163,6 +163,7 @@ Hook nào bị lỗi nội bộ (thiếu git, config hỏng…) sẽ **cho qua**
   "verifyOnStop": true,
   "maxStopRetries": 3,
   "requireProgressUpdate": true,
+  "envAccess": "keys",              // block | keys | full — xem mục .env bên dưới
   "protectedPaths": [".claude/settings.json", ".claude/hooks/**", ".claude/smart.config.json"]
 }
 ```
@@ -173,6 +174,18 @@ Hook nào bị lỗi nội bộ (thiếu git, config hỏng…) sẽ **cho qua**
 node .claude/hooks/configure.mjs                      # xem cấu hình hiện tại
 node .claude/hooks/configure.mjs testCmd="pnpm test:unit" strict=true
 node .claude/hooks/configure.mjs verifyOnStop=false   # tạm tắt kiểm tra khi kết thúc lượt
+```
+
+### File `.env` (`envAccess`)
+
+| Mức | Claude được làm gì | Hợp khi |
+|---|---|---|
+| `block` | Không đọc, không sửa, không xem tên biến | Secret thật (staging/production) nằm trên máy |
+| `keys` (mặc định) | `node .claude/hooks/env.mjs list` xem **tên biến** và biến nào còn trống; `env.mjs set KEY [giá trị] --file backend/.env` **thêm biến mới** (bạn duyệt, không ghi đè biến đã có). Không bao giờ thấy giá trị | Đa số dự án |
+| `full` | Đọc và sửa `.env` như file thường | `.env` chỉ chứa giá trị dev local (`postgres/postgres`…). Giá trị sẽ được gửi lên model |
+
+```bash
+node .claude/hooks/configure.mjs envAccess=full
 ```
 
 Bộ test chạy quá 3 phút? Đặt `testCmd` là tập test nhanh (unit), để test chậm cho CI.

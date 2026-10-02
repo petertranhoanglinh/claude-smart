@@ -16,6 +16,7 @@ export const DEFAULT_CONFIG = {
   requireProgressUpdate: true,
   fileGlobs: [],
   language: '',
+  envAccess: 'keys', // block | keys (names only, add via env.mjs) | full
   protectedPaths: [],
 };
 
@@ -93,6 +94,16 @@ export function globToRegExp(glob) {
   }
   return new RegExp(`^${re}$`, 'i');
 }
+
+/** .env, .env.local, apps/api/.env.production … but not .env.example / .sample / .template / .dist */
+export function isEnvFile(rel) {
+  return /(^|\/)\.env(\.[^/]*)?$/i.test(rel) && !/\.(example|sample|template|dist)$/i.test(rel);
+}
+
+export const ENV_HELP =
+  'List variable names with `node .claude/hooks/env.mjs list` (values are never shown); add a missing variable with ' +
+  '`node .claude/hooks/env.mjs set KEY [value] [--file path/.env]` (the user approves; existing keys are never overwritten). ' +
+  'Document new variables in .env.example. For a secret value, tell the user which key to fill in.';
 
 export function block(message) {
   process.stderr.write(`${message.trim()}\n`);
