@@ -253,8 +253,8 @@ const TOOLS = [
   ['claude', ['--version'], 'Claude Code CLI'],
   ['ast-grep', ['--version'], 'structural search — npm i -g @ast-grep/cli'],
   ['npx', ['--version'], 'MCP: playwright, context7, mongodb, claude-context; repomix'],
-  ['uvx', ['--version'], 'MCP: serena, postgres — install uv: https://docs.astral.sh/uv/'],
-  ['gh', ['--version'], 'GitHub CLI (alternative to GitHub MCP)'],
+  ['uvx', ['--version'], `optional, MCP serena/postgres — ${process.platform === 'win32' ? 'winget install --id=astral-sh.uv -e' : 'curl -LsSf https://astral.sh/uv/install.sh | sh'} (then reopen the terminal)`],
+  ['gh', ['--version'], 'optional, GitHub CLI (alternative to GitHub MCP)'],
   ['docker', ['--version'], 'sandbox/ — isolated autonomous runs'],
 ];
 
