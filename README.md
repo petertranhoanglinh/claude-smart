@@ -119,7 +119,7 @@ Nên **commit** toàn bộ các file này để cả team (và Claude ở máy k
 | `/bootstrap [khu vực]` | Dựng/làm mới bản đồ dự án, quy chuẩn, lệnh test/lint (chạy lần đầu hoặc khi kiến trúc đổi nhiều) |
 | `/explore <câu hỏi>` | Điều tra chỉ đọc bằng subagent: "luồng thanh toán chạy thế nào?" |
 | `/spec <tính năng>` | Phỏng vấn bạn rồi viết spec có tiêu chí nghiệm thu AC-1, AC-2… (tính năng mới hoặc lớn) |
-| `/plan-task <task | spec | story>` | Tạo file plan (đọc spec hoặc story BMAD nếu có), không sửa code |
+| `/plan-task <task \| spec \| story>` | Tạo file plan (đọc spec hoặc story BMAD nếu có), không sửa code |
 | `/implement [plan\|bước\|all]` | Làm 1 bước của plan, test, commit |
 | `/checkpoint` | Lưu trạng thái ra file trước khi `/clear` |
 | `/review-diff [range]` | Review thay đổi trước khi merge |
