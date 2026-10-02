@@ -42,6 +42,9 @@ node ~/tools/claude-smart/install.mjs /đường/dẫn/dự-án
 # (Khuyến nghị) kèm MCP không cần khóa: trình duyệt + docs thư viện
 node ~/tools/claude-smart/install.mjs /đường/dẫn/dự-án --mcp=playwright,context7
 
+# Plan, PROGRESS, review và câu trả lời viết bằng tiếng Việt
+node ~/tools/claude-smart/install.mjs /đường/dẫn/dự-án --lang=vi
+
 # (Tùy chọn) cài agents + luật chung vào ~/.claude cho MỌI dự án
 node ~/tools/claude-smart/install.mjs --global
 ```
@@ -152,6 +155,7 @@ Hook nào bị lỗi nội bộ (thiếu git, config hỏng…) sẽ **cho qua**
   "lintCmd": "npx eslint --no-warn-ignored {file}",
   "formatCmd": "npx prettier --write --log-level warn {file}",
   "fileGlobs": ["**/*.{js,ts,tsx}"],   // chỉ lint/format các file khớp
+  "language": "Vietnamese",          // ngôn ngữ của plan/PROGRESS/review/trả lời; "" = theo ngôn ngữ bạn chat
   "testTimeoutSec": 600,
   "testBeforeCommit": true,
   "verifyOnStop": true,

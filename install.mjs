@@ -3,6 +3,7 @@
 //   node install.mjs <target-dir> [--dry-run] [--force]   install/update into a project
 //   node install.mjs --global [--dry-run] [--force]       install agents + personal CLAUDE.md into ~/.claude
 //   node install.mjs <target-dir> --mcp=playwright,context7  also add MCP servers from mcp/catalog.json
+//   node install.mjs <target-dir> --lang=vi                write plans/PROGRESS/replies in Vietnamese
 //   node install.mjs --doctor                              check which power tools are installed
 //
 // Safe by design: user-owned files are never overwritten; managed files are updated only if the user
@@ -166,7 +167,13 @@ export function detectCommands(dir) {
 }
 
 // ---------- project install ----------
-export function installProject(target, { dryRun = false, force = false } = {}) {
+const LANGUAGES = { vi: 'Vietnamese', en: 'English', ja: 'Japanese', ko: 'Korean', zh: 'Chinese', fr: 'French', de: 'German', es: 'Spanish', th: 'Thai', id: 'Indonesian' };
+/** `vi` → `Vietnamese`; anything else is kept as written; empty means "match the user". */
+export function languageName(code) {
+  return LANGUAGES[String(code).toLowerCase()] ?? String(code);
+}
+
+export function installProject(target, { dryRun = false, force = false, lang } = {}) {
   target = path.resolve(target);
   if (!existsSync(target)) throw new Error(`Target does not exist: ${target}`);
   const plan = createPlan(dryRun, target);
@@ -208,12 +215,14 @@ export function installProject(target, { dryRun = false, force = false } = {}) {
     }
     if (rel === '.claude/smart.config.json') {
       const base = JSON.parse(src.toString());
-      if (!exists) plan.write(dest, `${JSON.stringify({ ...base, ...detectCommands(target) }, null, 2)}\n`, 'create');
+      const langOpt = lang === undefined ? {} : { language: languageName(lang) };
+      if (!exists) plan.write(dest, `${JSON.stringify({ ...base, ...detectCommands(target), ...langOpt }, null, 2)}\n`, 'create');
       else {
         const current = readJson(dest, {});
-        const missing = Object.keys(base).filter((k) => !(k in current));
-        if (missing.length) plan.write(dest, `${JSON.stringify({ ...base, ...current }, null, 2)}\n`, 'merge');
-        else plan.note('ok', rel);
+        const next = { ...base, ...current, ...langOpt };
+        if (JSON.stringify(next) !== JSON.stringify({ ...base, ...current }) || Object.keys(base).some((k) => !(k in current))) {
+          plan.write(dest, `${JSON.stringify(next, null, 2)}\n`, 'merge');
+        } else plan.note('ok', rel);
       }
       continue;
     }
@@ -330,7 +339,7 @@ export function installGlobal({ dryRun = false, force = false, home = homedir() 
 
 // ---------- CLI ----------
 const USAGE = `Usage:
-  node install.mjs <project-dir> [--mcp=a,b] [--dry-run] [--force]
+  node install.mjs <project-dir> [--lang=vi] [--mcp=a,b] [--dry-run] [--force]
   node install.mjs <project-dir> --mcp-only --mcp=playwright,context7
   node install.mjs --global [--dry-run] [--force]
   node install.mjs --doctor
@@ -341,7 +350,8 @@ function main(argv) {
   const mcp = mcpArg ? mcpArg.slice(6).split(',').map((s) => s.trim()).filter(Boolean) : [];
   const flags = new Set(argv.filter((a) => a.startsWith('--')).map((a) => a.split('=')[0]));
   const positional = argv.filter((a) => !a.startsWith('--'));
-  const opts = { dryRun: flags.has('--dry-run'), force: flags.has('--force') };
+  const langArg = argv.find((a) => a.startsWith('--lang='));
+  const opts = { dryRun: flags.has('--dry-run'), force: flags.has('--force'), lang: langArg ? langArg.slice(7) : undefined };
 
   if (flags.has('--doctor')) {
     for (const t of doctor()) console.log(`  ${t.ok ? '✔' : '✘'} ${t.cmd.padEnd(9)} ${t.ok ? t.version : `missing — ${t.why}`}`);

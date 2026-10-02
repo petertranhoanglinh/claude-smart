@@ -133,6 +133,14 @@ test('session-start injects progress, active plan and hints', () => {
   assert.match(ctx, /Branch:/);
 });
 
+test('session-start: injects language instruction when set', () => {
+  const dir = project({ language: 'Vietnamese' });
+  const ctx = JSON.parse(runHook('session-start.mjs', dir, {}).stdout).hookSpecificOutput.additionalContext;
+  assert.match(ctx, /LANGUAGE: write everything the user reads in Vietnamese/);
+  const none = JSON.parse(runHook('session-start.mjs', project(), {}).stdout).hookSpecificOutput.additionalContext;
+  assert.doesNotMatch(none, /LANGUAGE:/);
+});
+
 test('session-start: no bootstrap hint once the map is filled', () => {
   const dir = project({ testCmd: PASS });
   write(dir, 'docs/ai/architecture.md', '# Architecture\n> Filled by `/bootstrap`.\n## Overview\nReal content.');

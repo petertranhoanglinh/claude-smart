@@ -9,5 +9,6 @@
   "maxStopRetries": 3,
   "requireProgressUpdate": true,
   "fileGlobs": [],
+  "language": "",
   "protectedPaths": [".claude/settings.json", ".claude/hooks/**", ".claude/smart.config.json"]
 }

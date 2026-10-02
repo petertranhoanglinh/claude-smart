@@ -18,4 +18,6 @@ Report only findings you can defend, most severe first:
 - **[convention]** violates docs/ai/conventions.md
 - **[security]** secrets, injection, unsafe input handling
 
+Write findings in the `language` from `.claude/smart.config.json` if set.
+
 Format: `severity — path:line — problem — suggested fix`. If nothing is wrong, say so in one line. No praise, no restating the diff.

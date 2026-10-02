@@ -15,6 +15,7 @@ These rules apply to every task in this repo. They exist to keep context small a
 4. **Implement one step at a time**: do exactly one unchecked step → write/adjust tests → run tests → tick the checkbox → commit. Never batch several steps in one commit.
 
 ## Hard rules
+- If `.claude/smart.config.json` sets `language`, everything the user reads (replies, plans, PROGRESS, ADRs, reviews) is written in that language. Code stays as is.
 - Do not start coding a non-trivial change without a plan file.
 - Touch only files the plan names; if another file must change, update the plan first.
 - Tests must pass before commit (enforced by hooks). Never weaken or delete a test to make it pass — fix the code, or ask.

@@ -15,6 +15,7 @@ export const DEFAULT_CONFIG = {
   maxStopRetries: 3,
   requireProgressUpdate: true,
   fileGlobs: [],
+  language: '',
   protectedPaths: [],
 };
 

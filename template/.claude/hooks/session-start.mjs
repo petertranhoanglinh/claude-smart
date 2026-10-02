@@ -67,6 +67,11 @@ safe(() => {
   const notes = [];
   if (!arch || arch.includes('_One paragraph: what the system does')) notes.push('Project map is empty: suggest the user runs `/bootstrap` first.');
   if (!cfg.testCmd) notes.push('No testCmd in .claude/smart.config.json: tests are not enforced until it is set (`/bootstrap` sets it).');
+  if (cfg.language) {
+    notes.push(
+      `LANGUAGE: write everything the user reads in ${cfg.language} — chat replies, questions, plans (docs/ai/plans, headings included), PROGRESS.md, ADRs, review reports, docs/ai/*.md. Keep code, identifiers, file paths, commands, "- [ ]" checkboxes and commit messages as they are.`,
+    );
+  }
   notes.push('Follow docs/ai/WORKFLOW.md: Explore → Plan → Clear → Implement one step at a time.');
   parts.push(`## Notes\n- ${notes.join('\n- ')}`);
 

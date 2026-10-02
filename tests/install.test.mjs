@@ -121,6 +121,16 @@ test('detectCommands for a monorepo without root manifest', () => {
   assert.equal(cfg.lintCmd, undefined);
 });
 
+test('--lang sets language on fresh and existing installs', () => {
+  const dir = tempDir();
+  installProject(dir, { lang: 'vi' });
+  assert.equal(JSON.parse(read(dir, '.claude/smart.config.json')).language, 'Vietnamese');
+  installProject(dir, { lang: 'English' });
+  assert.equal(JSON.parse(read(dir, '.claude/smart.config.json')).language, 'English');
+  installProject(dir);
+  assert.equal(JSON.parse(read(dir, '.claude/smart.config.json')).language, 'English', 'kept without --lang');
+});
+
 test('global install writes agents and a managed block in ~/.claude/CLAUDE.md', () => {
   const home = tempDir();
   write(home, '.claude/CLAUDE.md', '# mine\n');

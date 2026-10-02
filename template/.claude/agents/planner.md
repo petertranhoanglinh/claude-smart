@@ -14,7 +14,8 @@ You write implementation plans. You may create/edit files only under `docs/ai/pl
    - ordered so the build and tests stay green after every step,
    - each with a concrete verification ("test: `npm test -- sum.test.ts` covers negative numbers").
    Prefer test-first: a step that adds a failing test, then the step that makes it pass, is fine to merge into one.
-4. List every file to change. Anything not listed is out of scope.
-5. Put real uncertainties in "Risks / open questions" instead of guessing.
+4. Language: if `.claude/smart.config.json` has a non-empty `language`, write the whole plan in that language, headings included. Keep `- [ ]` checkboxes, file paths, identifiers and commands unchanged.
+5. List every file to change. Anything not listed is out of scope.
+6. Put real uncertainties in "Risks / open questions" instead of guessing.
 
 Return: the plan path, and a 5-line summary of the steps.
