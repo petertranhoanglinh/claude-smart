@@ -18,6 +18,9 @@ You are planning only. Do not modify source code in this turn.
    - No spec and the task is a new, user-facing or ambiguous feature: suggest `/spec` first (the user may decline).
    - Otherwise, if the task is ambiguous in a way that changes the design, ask the user (max 3 questions).
 2. Explore with `explorer` subagents (parallel, one per angle). Read `docs/ai/architecture.md` and any matching `.claude/rules/` first.
+   If the task touches an external library/SDK API, a new dependency or a version bump, look it up with **Context7**
+   now (see `docs/ai/TOOLS.md`) for the version the project uses, and pass the findings to the planner — plans built
+   on guessed APIs are the most common cause of rework.
 3. Hand the findings **and the source file path** to the `planner` subagent to write `docs/ai/plans/YYYY-MM-DD-<slug>.md`.
 4. Read the plan it produced and fix anything wrong or vague. Each step: one commit, keeps tests green, has a concrete test (UI steps: a named Playwright spec).
    With a source spec/story: every acceptance criterion appears in the plan's coverage table with the step and test that prove it — none missing.

@@ -7,6 +7,10 @@
 ## Goal
 _What changes for the user/system, and why. One paragraph._
 
+## External docs checked
+_Context7 lookups for third-party APIs this plan relies on — `library@version — topic — key finding`. "None" if the plan uses no external API._
+-
+
 ## Context found during exploration
 - `path/to/file.ext:line` — why it matters
 

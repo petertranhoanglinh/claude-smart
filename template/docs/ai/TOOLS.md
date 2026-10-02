@@ -13,7 +13,11 @@ Keep using Grep for plain text, config keys, log messages.
 ## Semantic navigation (MCP, if configured in .mcp.json)
 - **serena** — `find_symbol`, `find_referencing_symbols`, `find_implementations`, `get_symbols_overview`: locate code by symbol instead of reading whole files (biggest token saver on large repos). Read-only here: its editing/memory tools are denied so every edit goes through Edit/Write and the claude-smart hooks; project memory stays in docs/ai/.
 - **claude-context** — natural-language search over the indexed codebase ("where is price-change handling?"). Use it to pick 3–5 candidate files, then verify by reading.
-- **context7** — current docs for a library/framework version. Use before using an API you are not certain about.
+- **context7** — current, version-specific docs for third-party libraries. **Mandatory** (when the server is available) before writing or changing code that:
+  - uses an external SDK/library API not already used the same way in this repo (cloud SDKs such as aws-sdk-go-v2 / S3 / R2, payment, auth, Facebook/TikTok APIs…),
+  - adds a dependency or bumps its version (check breaking changes for the exact version in the lockfile / go.mod / package.json),
+  - relies on framework behaviour that changes between major versions (Next.js, React, Playwright, ORM, router…).
+  How: `resolve-library-id` → `query-docs` with a narrow topic (e.g. "presigned PUT content length"). Match the version the project actually uses. In the plan or your reply, cite what you checked (library + version + topic) in one line. Skip it for code that only follows patterns already in this repo, and say "no external API" when unsure whether it applies.
 
 ## Verify in the real world (MCP)
 - **playwright** (MCP) — after UI changes: open the page, exercise the flow, take a screenshot, check layout and console errors.

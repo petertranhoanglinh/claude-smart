@@ -7,7 +7,7 @@ argument-hint: "[plan file or step number, optional]"
 Arguments: $ARGUMENTS
 
 1. **Locate the step.** Use the plan path/step from the arguments, otherwise the active plan from the session context (newest plan with unchecked `- [ ]`). Read the whole plan, then pick the first unchecked step. If no plan exists, stop and suggest `/plan-task`.
-2. **Load only what the step needs**: the files it names, the relevant section of `docs/ai/conventions.md`. Do not wander.
+2. **Load only what the step needs**: the files it names, the relevant section of `docs/ai/conventions.md`. Do not wander. If the step calls an external library/SDK API in a way this repo does not already use, check it with **Context7** first (version from go.mod / package.json), unless the plan's "External docs checked" already covers it.
 3. **Test first** where practical: write or extend the test that proves the step, run it, see it fail for the right reason. For a UI step that test is a Playwright spec in the frontend's `e2e/` (see `.claude/rules/ui-e2e.md`); if Playwright is not set up, stop and suggest `/e2e-setup`.
 4. **Implement** the minimum change to make it pass. Stay inside the files the plan lists; if another file must change, edit the plan first and say why.
 5. **Verify**: run the step's test, then the full `testCmd` (use the `test-runner` subagent if output is long). Fix the code until green. Never weaken a test to pass. For UI steps, if the Playwright MCP is available, also open the page and look at it.
