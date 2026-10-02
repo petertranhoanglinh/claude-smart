@@ -133,6 +133,13 @@ test('session-start injects progress, active plan and hints', () => {
   assert.match(ctx, /Branch:/);
 });
 
+test('session-start: no bootstrap hint once the map is filled', () => {
+  const dir = project({ testCmd: PASS });
+  write(dir, 'docs/ai/architecture.md', '# Architecture\n> Filled by `/bootstrap`.\n## Overview\nReal content.');
+  const ctx = JSON.parse(runHook('session-start.mjs', dir, {}).stdout).hookSpecificOutput.additionalContext;
+  assert.doesNotMatch(ctx, /Project map is empty/);
+});
+
 test('hooks never block on garbage input', () => {
   const dir = project({ testCmd: FAIL });
   for (const h of ['protect-files.mjs', 'guard-bash.mjs', 'post-edit.mjs', 'session-start.mjs']) {

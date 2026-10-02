@@ -65,7 +65,7 @@ safe(() => {
 
   const arch = read(path.join(dir, 'docs', 'ai', 'architecture.md'));
   const notes = [];
-  if (!arch || arch.includes('Filled by `/bootstrap`')) notes.push('Project map is empty: suggest the user runs `/bootstrap` first.');
+  if (!arch || arch.includes('_One paragraph: what the system does')) notes.push('Project map is empty: suggest the user runs `/bootstrap` first.');
   if (!cfg.testCmd) notes.push('No testCmd in .claude/smart.config.json: tests are not enforced until it is set (`/bootstrap` sets it).');
   notes.push('Follow docs/ai/WORKFLOW.md: Explore → Plan → Clear → Implement one step at a time.');
   parts.push(`## Notes\n- ${notes.join('\n- ')}`);
