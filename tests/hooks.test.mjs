@@ -137,6 +137,10 @@ test('stop-verify: BMAD artifacts and Markdown anywhere count as docs (no test r
   write(dir, '_bmad/core/config.yaml', 'x: 1');
   write(dir, 'notes/2026-10-02.md', 'note');
   write(dir, 'docs/ai/specs/media.md', '# Spec');
+  write(dir, '.mcp.json', '{}');
+  write(dir, '.serena/project.yml', 'x: 1');
+  write(dir, 'skills-lock.json', '{}');
+  write(dir, '.claude/skills/bmad/SKILL.md', '# x');
   assert.equal(runHook('stop-verify.mjs', dir, {}).code, 0);
 });
 

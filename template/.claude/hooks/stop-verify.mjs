@@ -4,8 +4,10 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { readInput, projectDir, loadConfig, run, git, tail, block, safe } from './lib.mjs';
 
-// Planning/doc-only changes (specs, plans, BMAD artifacts, any Markdown) never require a test run.
-const DOC_ONLY = /^(docs\/|\.claude\/|_bmad(-output)?\/|\.bmad-core\/)|\.(md|mdx)$/i;
+// Planning/doc-only and agent-tooling changes (specs, plans, BMAD artifacts, Markdown, MCP/Serena/skills config)
+// never require a test run or a PROGRESS update.
+const DOC_ONLY =
+  /^(docs\/|\.claude\/|\.agents\/|\.serena\/|_bmad(-output)?\/|\.bmad-core\/)|\.(md|mdx)$|^(\.mcp\.json|skills-lock\.json|\.gitignore)$/i;
 
 function changedFiles(dir) {
   const out = git(['status', '--porcelain', '--untracked-files=all'], dir);
