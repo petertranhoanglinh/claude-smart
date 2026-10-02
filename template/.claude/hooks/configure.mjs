@@ -31,6 +31,18 @@ for (const arg of args) {
     process.exit(1);
   }
   const type = typeof DEFAULT_CONFIG[key];
+  if (Array.isArray(DEFAULT_CONFIG[key])) {
+    try {
+      const list = JSON.parse(raw);
+      if (!Array.isArray(list)) throw new Error('not an array');
+    } catch {
+      console.error(
+        `${key} must be a JSON array, e.g. ${key}='["a/**","b/**"]'\n` +
+          `Windows PowerShell 5.1 strips the inner quotes — write them as \\" instead: '${key}=[\\"a/**\\",\\"b/**\\"]'`,
+      );
+      process.exit(1);
+    }
+  }
   cfg[key] = Array.isArray(DEFAULT_CONFIG[key])
     ? JSON.parse(raw)
     : type === 'boolean'

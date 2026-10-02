@@ -18,7 +18,8 @@ Tài liệu này dành cho người **đã cài xong** claude-smart vào dự á
 10. [Khi bị hook chặn: đọc và xử lý](#10-khi-bị-hook-chặn-đọc-và-xử-lý)
 11. [Mẫu câu lệnh hay dùng](#11-mẫu-câu-lệnh-hay-dùng)
 12. [Nên và không nên](#12-nên-và-không-nên)
-13. [Câu hỏi thường gặp](#13-câu-hỏi-thường-gặp)
+13. [Cấu hình cơ bản](#13-cấu-hình-cơ-bản)
+14. [Câu hỏi thường gặp](#14-câu-hỏi-thường-gặp)
 
 ---
 
@@ -302,7 +303,119 @@ Hướng dẫn tôi từng bước tạo bucket R2 và API token theo Phase 0, k
 | 1 phiên Claude cho mỗi dự án | Mở terminal và panel VS Code cùng sửa code |
 | Tự làm việc cần đăng nhập hoặc secret | Dán token hay mật khẩu vào chat |
 
-## 13. Câu hỏi thường gặp
+## 13. Cấu hình cơ bản
+
+Mọi lệnh dưới đây chạy **trong terminal, ở thư mục gốc dự án**. Cấu hình của claude-smart nằm trong `.claude/smart.config.json`. Claude bị chặn sửa thẳng file này, nên mọi thay đổi đi qua `configure.mjs` (khi Claude chạy lệnh này, bạn sẽ được hỏi duyệt). Đổi xong, gõ `/clear` trong Claude để chắc chắn phiên đang chạy nhận cấu hình mới.
+
+### 13.1 Xem cấu hình hiện tại
+
+```powershell
+node .claude/hooks/configure.mjs
+```
+
+### 13.2 Các thiết lập hay đổi
+
+| Muốn | Lệnh |
+|---|---|
+| Claude viết plan/PROGRESS/trả lời bằng tiếng Việt | `node .claude/hooks/configure.mjs language=Vietnamese` |
+| Trả lời theo ngôn ngữ bạn chat | `node .claude/hooks/configure.mjs language=` |
+| Cho Claude đọc/sửa `.env` (chỉ khi toàn giá trị dev) | `node .claude/hooks/configure.mjs envAccess=full` |
+| Claude chỉ được xem tên biến `.env` (mặc định) | `node .claude/hooks/configure.mjs envAccess=keys` |
+| Cấm hẳn `.env` | `node .claude/hooks/configure.mjs envAccess=block` |
+| Đổi lệnh test | `node .claude/hooks/configure.mjs testCmd="npm test"` |
+| Việc nhỏ không bắt ghi PROGRESS | `node .claude/hooks/configure.mjs requireProgressUpdate=false` |
+| Không chạy test mỗi khi Claude trả lời xong (vẫn chạy trước commit) | `node .claude/hooks/configure.mjs verifyOnStop=false` |
+| Cho commit dù test fail (không khuyến khích) | `node .claude/hooks/configure.mjs testBeforeCommit=false` |
+| Test chạy lâu, tăng thời gian chờ (giây) | `node .claude/hooks/configure.mjs testTimeoutSec=1200` |
+| Claude được thử sửa tối đa N lần khi test fail rồi dừng | `node .claude/hooks/configure.mjs maxStopRetries=5` |
+| Tắt hết kiểm tra test/lint (vẫn chặn file nhạy cảm và lệnh nguy hiểm) | `node .claude/hooks/configure.mjs strict=false` |
+| Bật lại | `node .claude/hooks/configure.mjs strict=true` |
+
+Đổi nhiều thứ một lúc cũng được:
+
+```powershell
+node .claude/hooks/configure.mjs language=Vietnamese envAccess=keys requireProgressUpdate=false
+```
+
+### 13.3 Thiết lập dạng danh sách (`protectedPaths`, `fileGlobs`)
+
+Giá trị phải là mảng JSON và **ghi đè cả danh sách**, nên nhớ giữ lại các mục cũ.
+
+```powershell
+# Windows PowerShell 5.1: phải viết dấu " bên trong thành \"
+node .claude/hooks/configure.mjs 'protectedPaths=[\".claude/settings.json\",\".claude/hooks/**\",\".claude/smart.config.json\",\"backend/migrations/**\"]'
+```
+
+```bash
+# Git Bash / macOS / Linux / PowerShell 7
+node .claude/hooks/configure.mjs 'protectedPaths=[".claude/settings.json",".claude/hooks/**",".claude/smart.config.json","backend/migrations/**"]'
+```
+
+> Ngại gõ? Nói với Claude: *"Thêm `backend/migrations/**` vào protectedPaths."* Claude sẽ tự chạy `configure.mjs` và bạn chỉ việc bấm duyệt.
+
+### 13.4 Bộ cấu hình mẫu
+
+**Nghiêm ngặt (mặc định, khuyến nghị cho code quan trọng):**
+```powershell
+node .claude/hooks/configure.mjs strict=true testBeforeCommit=true verifyOnStop=true requireProgressUpdate=true envAccess=keys
+```
+
+**Nhẹ (làm nhanh nhiều việc nhỏ, vẫn chặn commit khi test fail):**
+```powershell
+node .claude/hooks/configure.mjs verifyOnStop=false requireProgressUpdate=false
+```
+
+**Tạm tắt khi debug / thử nghiệm** (nhớ bật lại):
+```powershell
+node .claude/hooks/configure.mjs strict=false
+# ... thử nghiệm xong ...
+node .claude/hooks/configure.mjs strict=true
+```
+
+### 13.5 Quyền riêng của bạn (`.claude/settings.local.json`)
+
+File này **không commit** (đã nằm trong `.gitignore`), chỉ áp dụng cho máy bạn. Dùng để bớt bị hỏi quyền cho các lệnh bạn tin tưởng. Tạo file `.claude/settings.local.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(go test *)",
+      "Bash(go build *)",
+      "Bash(npx tsc *)",
+      "Bash(npx playwright test*)",
+      "Bash(docker compose ps*)"
+    ]
+  }
+}
+```
+
+- `allow`: không hỏi nữa. `ask`: luôn hỏi. `deny`: cấm hẳn.
+- **Đừng** thêm `Bash(node .claude/hooks/configure.mjs*)` vào `allow`. Đây là chốt để bạn kiểm soát việc nới luật.
+- Cấu hình dùng chung cho cả team (`.claude/settings.json`) bị bảo vệ; muốn sửa thì sửa tay rồi commit.
+
+### 13.6 MCP servers
+
+```powershell
+node E:\start-up\claude-smart\install.mjs --list-mcp                         # xem có gì
+node E:\start-up\claude-smart\install.mjs . --mcp-only --mcp=playwright,context7
+```
+
+Trong Claude, gõ `/mcp` để xem server nào đang chạy. Server cần biến môi trường (`DATABASE_URI`, `GITHUB_PERSONAL_ACCESS_TOKEN`…) thì đặt biến trong terminal trước khi mở `claude`/VS Code.
+
+### 13.7 Kiểm tra nhanh mọi thứ còn chạy đúng
+
+```powershell
+node .claude/hooks/configure.mjs                  # cấu hình
+node .claude/hooks/env.mjs list                   # tên biến .env (không lộ giá trị)
+node E:\start-up\claude-smart\install.mjs --doctor  # công cụ đã cài
+node E:\start-up\claude-smart\install.mjs . --dry-run   # có bản claude-smart mới cần cập nhật không
+```
+
+Trong Claude: `/hooks` (hook đã bật), `/agents`, `/mcp`.
+
+## 14. Câu hỏi thường gặp
 
 **Chat bình thường có bị hạn chế gì không?**
 Không. Bạn hỏi và sửa như trước. Khác biệt duy nhất là hook kiểm tra test và PROGRESS trước khi Claude trả lời xong ([mục 3](#3-việc-nhỏ-chat-bình-thường)).
