@@ -31,8 +31,10 @@ node install.mjs --doctor
 
 ## 2. Cài đặt nhanh
 
+> Hướng dẫn chi tiết từng bước (dự án đã có code, monorepo, chia sẻ cho team, gỡ cài đặt…): xem **[INSTALL.md](INSTALL.md)**.
+
 ```bash
-git clone <repo-này> ~/tools/claude-smart
+git clone https://github.com/petertranhoanglinh/claude-smart.git ~/tools/claude-smart
 
 # Cài vào một dự án (mới hoặc đã có code)
 node ~/tools/claude-smart/install.mjs /đường/dẫn/dự-án
